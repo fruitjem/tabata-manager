@@ -117,10 +117,10 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
 
       <Box mt={2}>
         <Button variant="contained" color={isRunning ? 'warning' : 'success'} onClick={handleStartPause}>
-          {isRunning ? 'Pausa ⏸️' : 'Start ▶️'}
+          {isRunning ? 'Pausa' : 'Start'}
         </Button>
         <Button variant="outlined" color="error" onClick={handleReset} sx={{ ml: 2 }}>
-          Reset 🔁
+          Reset
         </Button>
       </Box>
     </Box>

@@ -1,4 +1,4 @@
-// WorkoutScreen.jsx - con pulsante fullscreen che scompare in modalità fullscreen
+// WorkoutScreen.jsx - pulsanti senza icone
 
 import { useState, useEffect } from 'react';
 import Typography from '@mui/material/Typography';
@@ -60,7 +60,7 @@ function WorkoutScreen() {
       {!isFullscreen && (
         <Box sx={{ mb: 2 }}>
           <Button variant="outlined" onClick={enterFullscreen}>
-            🖥️ Fullscreen
+            Fullscreen
           </Button>
         </Box>
       )}
