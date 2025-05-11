@@ -1,4 +1,4 @@
-// Timer.jsx - formato MM:SS.CC con etichette H M S
+// Timer.jsx - fix: ripristina lavoro come prima fase a ogni nuova stazione
 
 import { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
@@ -8,16 +8,18 @@ import LinearProgress from '@mui/material/LinearProgress';
 
 const beep = new Audio('/beep.mp3');
 
-function Timer({ totalRounds, work, rest, onRoundChange }) {
+function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, totalStations }) {
   const [round, setRound] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(work * 1000); // in ms
+  const [timeLeft, setTimeLeft] = useState(work * 1000);
   const [isWorkPhase, setIsWorkPhase] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [preparing, setPreparing] = useState(true);
   const [prepTimeLeft, setPrepTimeLeft] = useState(3);
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [station, setStation] = useState(0);
 
-  const totalDuration = (work + rest) * totalRounds;
+  const totalRoundsAllStations = stationRounds * totalStations;
+  const totalDurationAllStations = (work + rest) * totalRoundsAllStations; // in seconds
 
   useEffect(() => {
     if (!isRunning || !preparing) return;
@@ -46,12 +48,26 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
 
           if (!isWorkPhase) {
             const nextRound = round + 1;
-            if (nextRound >= totalRounds) {
-              clearInterval(interval);
-              setIsRunning(false);
-              return 0;
+            if (nextRound >= stationRounds) {
+              if (station + 1 < totalStations) {
+                const nextStation = station + 1;
+                setStation(nextStation);
+                onStationChange(nextStation);
+                setRound(0);
+                setElapsedTime((prevElapsed) => prevElapsed + 10);
+                setIsWorkPhase(true); // 💡 reset a WORK phase
+                setPreparing(true);
+                setPrepTimeLeft(3);
+                return work * 1000;
+              } else {
+                setElapsedTime((prevElapsed) => prevElapsed + 10);
+                clearInterval(interval);
+                setIsRunning(false);
+                return 0;
+              }
             }
             setRound(nextRound);
+            onRoundChange(nextRound);
           }
 
           setIsWorkPhase(!isWorkPhase);
@@ -64,11 +80,7 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
     }, 10);
 
     return () => clearInterval(interval);
-  }, [isRunning, preparing, round, isWorkPhase]);
-
-  useEffect(() => {
-    onRoundChange(round);
-  }, [round]);
+  }, [isRunning, preparing, round, isWorkPhase, station]);
 
   const handleStartPause = () => {
     setIsRunning(!isRunning);
@@ -82,7 +94,9 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
     setPreparing(true);
     setPrepTimeLeft(3);
     setElapsedTime(0);
+    setStation(0);
     onRoundChange(0);
+    onStationChange(0);
   };
 
   const formatTimeParts = (ms) => {
@@ -94,16 +108,18 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
 
   const { minutes, seconds, centis } = formatTimeParts(timeLeft);
 
-  const progress = Math.min((elapsedTime / (totalDuration * 1000)) * 100, 100);
+  const progress = Math.min((elapsedTime / (totalDurationAllStations * 1000)) * 100, 100);
   const phaseColor = isWorkPhase ? 'success' : 'info';
+  const boxBg = isWorkPhase ? '#2e7d32' : '#f9a825';
+  const label = isWorkPhase ? 'LAVORO' : 'RIPOSO';
 
   return (
     <Box textAlign="center" mb={4}>
       <Typography variant="h5" gutterBottom>
-        Round {round + 1} / {totalRounds}
+        Round {round + 1} / {stationRounds} | Stazione {station + 1} / {totalStations}
       </Typography>
       <Typography variant="subtitle1">
-        Durata totale: {Math.floor(totalDuration / 60)}m {totalDuration % 60}s |
+        Durata totale: {Math.floor(totalDurationAllStations / 60)}m {totalDurationAllStations % 60}s |
         Trascorso: {Math.floor((elapsedTime / 1000) / 60)}m {Math.floor((elapsedTime / 1000) % 60)}s
       </Typography>
 
@@ -112,18 +128,22 @@ function Timer({ totalRounds, work, rest, onRoundChange }) {
       </Box>
 
       <Box sx={{
-        backgroundColor: '#1e1e1e',
+        backgroundColor: boxBg,
         borderRadius: 2,
-        px: 4,
-        py: 2,
+        px: 6,
+        py: 4,
         my: 2,
-        display: 'inline-block'
+        display: 'inline-block',
+        color: '#fff'
       }}>
-        <Typography variant="h2" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+          {label}
+        </Typography>
+        <Typography variant="h1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
           {minutes}:{seconds}.{centis}
         </Typography>
-        <Typography variant="caption" display="block" sx={{ color: '#aaa', mt: 1 }}>
-          HH&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SS
+        <Typography variant="caption" display="block" sx={{ color: '#fff', mt: 1 }}>
+          MM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CC
         </Typography>
       </Box>
 
