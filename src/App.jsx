@@ -1,33 +1,38 @@
-import { useEffect } from 'react';
+// App.jsx
+
+import { useState } from 'react';
+import { Box } from '@mui/material';
+import TabataDashboard from './components/TabataDashboard';
 import WorkoutScreen from './components/WorkoutScreen';
 
 function App() {
-  useEffect(() => {
-    let timeout;
+  const [config, setConfig] = useState(null);
 
-    const resetCursor = () => {
-      document.body.classList.remove('idle');
-      clearTimeout(timeout);
-      timeout = setTimeout(() => {
-        document.body.classList.add('idle');
-      }, 2000); // nasconde il cursore dopo 2 secondi
-    };
-
-    window.addEventListener('mousemove', resetCursor);
-    window.addEventListener('keydown', resetCursor);
-
-    resetCursor();
-
-    return () => {
-      window.removeEventListener('mousemove', resetCursor);
-      window.removeEventListener('keydown', resetCursor);
-    };
-  }, []);
+  const handleStart = (userConfig) => {
+    setConfig(userConfig);
+  };
 
   return (
-    <div>
-      <WorkoutScreen />
-    </div>
+    <Box
+      sx={{
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        backgroundColor: '#121212',
+        padding: 2,
+      }}
+    >
+      {config ? (
+        <WorkoutScreen
+          stationRounds={config.rounds}
+          work={config.work}
+          rest={config.rest}
+          stations={config.stations}
+        />
+      ) : (
+        <TabataDashboard onStart={handleStart} />
+      )}
+    </Box>
   );
 }
 

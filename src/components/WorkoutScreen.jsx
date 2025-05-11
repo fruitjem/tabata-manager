@@ -1,4 +1,4 @@
-// WorkoutScreen.jsx - corretto flusso stazione/round + rinominato stationRound
+// WorkoutScreen.jsx - mostra esercizio corretto per ogni round/stazione
 
 import { useState } from 'react';
 import Typography from '@mui/material/Typography';
@@ -7,31 +7,24 @@ import Button from '@mui/material/Button';
 import Timer from './Timer';
 import StationList from './StationList';
 
-const stations = [
-  {
-    name: 'Stazione 1',
-    exercises: [
-      { name: 'Push-Up', gif: '/gifs/pushUp.gif' },
-      { name: 'Push-Up', gif: '/gifs/pushUp.gif' },
-      { name: 'Push-Up', gif: '/gifs/pushUp.gif' },
-    ],
-  },
-  {
-    name: 'Stazione 2',
-    exercises: [
-      { name: 'Jumping Jack', gif: '/gifs/pushUp.gif' },
-      { name: 'Jumping Jack', gif: '/gifs/pushUp.gif' },
-      { name: 'Jumping Jack', gif: '/gifs/pushUp.gif' },
-    ],
-  },
-];
-
-function WorkoutScreen() {
+function WorkoutScreen({ stationRounds, work, rest, stations }) {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentStation, setCurrentStation] = useState(0);
-  const stationRounds = 3;
-  const work = 20;
-  const rest = 10;
+
+  // Mappa stazioni con esercizi ripetuti o ciclici in base al numero di round
+  const mappedStations = stations.map((station) => {
+    const exercises = Array.from({ length: stationRounds }).map((_, i) => {
+      const ex = station.exercises[i % station.exercises.length];
+      return {
+        name: ex.name,
+        gif: ex.gif,
+      };
+    });
+    return {
+      name: station.name,
+      exercises,
+    };
+  });
 
   return (
     <Box
@@ -55,12 +48,16 @@ function WorkoutScreen() {
           rest={rest}
           onRoundChange={setCurrentRound}
           onStationChange={setCurrentStation}
-          totalStations={stations.length}
+          totalStations={mappedStations.length}
         />
       </Box>
 
       <Box sx={{ width: '100%', maxWidth: 960, mt: 4 }}>
-        <StationList stations={stations} currentRound={currentRound} currentStation={currentStation} />
+        <StationList
+          stations={mappedStations}
+          currentRound={currentRound}
+          currentStation={currentStation}
+        />
       </Box>
     </Box>
   );
