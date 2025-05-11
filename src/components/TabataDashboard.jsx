@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - supporto per esercizi multipli per stazione
+// TabataDashboard.jsx - larghezza fissa per i Select esercizi
 
 import { useState } from 'react';
 import {
@@ -12,7 +12,9 @@ import {
   Select,
   FormControl,
   InputLabel,
+  IconButton,
 } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 import exerciseOptions from './exercises';
 
 function TabataDashboard({ onStart }) {
@@ -45,6 +47,12 @@ function TabataDashboard({ onStart }) {
   const addExerciseToStation = (stationIndex) => {
     const updated = [...stations];
     updated[stationIndex].exercises.push({ name: '', gif: '' });
+    setStations(updated);
+  };
+
+  const removeExerciseFromStation = (stationIndex, exerciseIndex) => {
+    const updated = [...stations];
+    updated[stationIndex].exercises.splice(exerciseIndex, 1);
     setStations(updated);
   };
 
@@ -118,22 +126,31 @@ function TabataDashboard({ onStart }) {
                   Esercizi:
                 </Typography>
                 {station.exercises.map((ex, eIndex) => (
-                  <FormControl fullWidth sx={{ mb: 1 }} key={eIndex}>
-                    <InputLabel>Seleziona esercizio</InputLabel>
-                    <Select
-                      value={ex.name}
-                      label="Seleziona esercizio"
-                      onChange={(e) =>
-                        handleExerciseChange(sIndex, eIndex, e.target.value)
-                      }
+                  <Box key={eIndex} display="flex" alignItems="center" gap={1} mb={1}>
+                    <FormControl sx={{ width: 300 }}>
+                      <InputLabel>Seleziona esercizio</InputLabel>
+                      <Select
+                        value={ex.name}
+                        label="Seleziona esercizio"
+                        onChange={(e) =>
+                          handleExerciseChange(sIndex, eIndex, e.target.value)
+                        }
+                      >
+                        {exerciseOptions.map((option) => (
+                          <MenuItem key={option.name} value={option.name}>
+                            {option.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    <IconButton
+                      aria-label="rimuovi"
+                      onClick={() => removeExerciseFromStation(sIndex, eIndex)}
+                      disabled={station.exercises.length <= 1}
                     >
-                      {exerciseOptions.map((option) => (
-                        <MenuItem key={option.name} value={option.name}>
-                          {option.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Box>
                 ))}
                 <Button
                   variant="outlined"
