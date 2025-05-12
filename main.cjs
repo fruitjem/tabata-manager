@@ -1,24 +1,21 @@
+// main.cjs
 const { app, BrowserWindow } = require('electron');
 const path = require('path');
-const fs = require('fs');
 
 function createWindow() {
-  const distPath = path.join(__dirname, 'dist', 'index.html');
-
-  // Log per capire cosa succede
-  console.log('Loading file:', distPath);
-  console.log('File exists:', fs.existsSync(distPath));
-
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      preload: path.join(__dirname, 'preload.cjs'),
     },
   });
 
-  win.loadFile(distPath);
-  win.webContents.openDevTools(); // DevTools attivi
+  const indexPath = path.join(__dirname, 'dist', 'index.html');
+  win.loadFile(indexPath);
+
+  // win.webContents.openDevTools(); // opzionale
 }
 
 app.whenReady().then(() => {

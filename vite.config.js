@@ -1,12 +1,17 @@
-// vite.config.js - percorso base relativo per Electron
-
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import path from 'path'
 
 export default defineConfig({
-  base: './', // ✅ importante per build Electron
+  base: './',
   plugins: [react()],
   build: {
     outDir: 'dist',
+    emptyOutDir: true,
   },
-});
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+})

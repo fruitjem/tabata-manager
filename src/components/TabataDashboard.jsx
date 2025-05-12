@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - mapping sicuro esercizi da exerciseOptions
+// TabataDashboard.jsx - aggiornato per usare electron-store
 
 import { useState, useEffect } from 'react';
 import {
@@ -36,7 +36,7 @@ function TabataDashboard({ onStart }) {
   const [savedTabatas, setSavedTabatas] = useState([]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('savedTabatas')) || [];
+    const saved = window.store?.get('savedTabatas') || [];
     setSavedTabatas(saved);
   }, []);
 
@@ -89,7 +89,7 @@ function TabataDashboard({ onStart }) {
       stations,
     };
     const updated = [...savedTabatas, newTabata];
-    localStorage.setItem('savedTabatas', JSON.stringify(updated));
+    window.store?.set('savedTabatas', updated);
     setSavedTabatas(updated);
     setTabataName('');
   };
