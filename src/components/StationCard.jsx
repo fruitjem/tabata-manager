@@ -1,31 +1,34 @@
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardMedia from '@mui/material/CardMedia';
-import Typography from '@mui/material/Typography';
+// StationCard.jsx - fix errore station undefined
 
-function StationCard({ name, exercise }) {
+import React from 'react';
+import { Card, CardContent, Typography, Box } from '@mui/material';
+import placeholderGif from '../assets/gifs/placeholder.gif';
+
+function StationCard({ station, round }) {
+  if (!station || !station.exercises || station.exercises.length === 0) {
+    return null;
+  }
+
+  const exercise = station.exercises[round % station.exercises.length];
+  const gifToShow = exercise?.gif || placeholderGif;
+
   return (
-    <Card sx={{ backgroundColor: '#1e1e1e', color: '#fff' }}>
+    <Card sx={{ minWidth: 250, backgroundColor: '#2b2b2b', color: 'white' }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
-          {name}
+          {station.name || 'Stazione'}
         </Typography>
-        {exercise ? (
-          <>
-            <Typography variant="subtitle1" gutterBottom>
-              {exercise.name}
-            </Typography>
-            <CardMedia
-              component="img"
-              height="160"
-              image={exercise.gif}
-              alt={exercise.name}
-              sx={{ borderRadius: 1, objectFit: 'cover' }}
-            />
-          </>
-        ) : (
-          <Typography variant="subtitle2">✓ Fine esercizi</Typography>
-        )}
+        <Typography variant="subtitle1" gutterBottom>
+          {exercise?.name || 'Esercizio'}
+        </Typography>
+        <Box mt={2}>
+          <img
+            src={gifToShow}
+            alt={exercise?.name || 'esercizio'}
+            width="100%"
+            style={{ borderRadius: 8 }}
+          />
+        </Box>
       </CardContent>
     </Card>
   );

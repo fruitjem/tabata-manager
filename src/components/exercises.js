@@ -1,23 +1,27 @@
+// exercises.js - GIF import con percorso relativo
+
+import pushUpGif from '../assets/gifs/pushUp.gif';
+
 const exerciseOptions = [
   {
     name: 'Push-Up',
-    gif: '/gifs/pushUp.gif',
+    gif: pushUpGif,
   },
   {
     name: 'Jumping Jack',
-    gif: '/gifs/pushUp.gif',
+    gif: pushUpGif,
   },
   {
     name: 'Squat',
-    gif: '/gifs/pushUp.gif',
+    gif: pushUpGif,
   },
   {
     name: 'Mountain Climbers',
-    gif: '/gifs/pushUp.gif',
+    gif: pushUpGif,
   },
   {
     name: 'Burpees',
-    gif: '/gifs/pushUp.gif',
+    gif: pushUpGif,
   },
 ];
 

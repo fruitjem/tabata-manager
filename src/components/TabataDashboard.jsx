@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - i Tabata salvati spostati a sinistra come sidebar
+// TabataDashboard.jsx - mapping sicuro esercizi da exerciseOptions
 
 import { useState, useEffect } from 'react';
 import {
@@ -47,11 +47,11 @@ function TabataDashboard({ onStart }) {
   };
 
   const handleExerciseChange = (stationIndex, exerciseIndex, value) => {
+    const exercise = exerciseOptions.find((e) => e.name.trim().toLowerCase() === value.trim().toLowerCase());
     const updated = [...stations];
-    const exercise = exerciseOptions.find((e) => e.name === value);
     updated[stationIndex].exercises[exerciseIndex] = {
-      name: exercise.name,
-      gif: exercise.gif,
+      name: value,
+      gif: exercise?.gif || '',
     };
     setStations(updated);
   };
@@ -95,6 +95,7 @@ function TabataDashboard({ onStart }) {
   };
 
   const handleStart = () => {
+    console.log('Launching tabata with stations:', stations);
     onStart({ rounds, work, rest, stations });
   };
 
@@ -109,7 +110,9 @@ function TabataDashboard({ onStart }) {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
       <Box sx={{ width: 250, bgcolor: '#1e1e1e', p: 2 }}>
-        <span style={{ display: 'block', textAlign: 'center' }}>Tabata salvati</span>
+        <Typography variant="h6" color="white" align="center" gutterBottom>
+          Tabata salvati
+        </Typography>
         <Divider sx={{ mb: 1, bgcolor: '#444' }} />
         <List>
           {savedTabatas.map((t) => (

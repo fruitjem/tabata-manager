@@ -11,6 +11,9 @@ function WorkoutScreen({ stationRounds, work, rest, stations }) {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentStation, setCurrentStation] = useState(0);
 
+  console.log('WorkoutScreen stations:', stations);
+
+
   // Mappa stazioni con esercizi ripetuti o ciclici in base al numero di round
   const mappedStations = stations.map((station) => {
     const exercises = Array.from({ length: stationRounds }).map((_, i) => {
