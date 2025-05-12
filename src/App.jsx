@@ -1,38 +1,37 @@
-// App.jsx
+// App.jsx - aggiunto supporto per "Torna alla Dashboard"
 
 import { useState } from 'react';
-import { Box } from '@mui/material';
 import TabataDashboard from './components/TabataDashboard';
 import WorkoutScreen from './components/WorkoutScreen';
 
 function App() {
-  const [config, setConfig] = useState(null);
+  const [isRunningTabata, setIsRunningTabata] = useState(false);
+  const [tabataData, setTabataData] = useState(null);
 
-  const handleStart = (userConfig) => {
-    setConfig(userConfig);
+  const handleStartTabata = ({ stations, rounds, work, rest }) => {
+    setTabataData({ stations, rounds, work, rest });
+    setIsRunningTabata(true);
+  };
+
+  const handleBackToDashboard = () => {
+    setIsRunningTabata(false);
+    setTabataData(null);
   };
 
   return (
-    <Box
-      sx={{
-        justifyContent: 'center',
-        alignItems: 'center',
-        minHeight: '100vh',
-        backgroundColor: '#121212',
-        padding: 2,
-      }}
-    >
-      {config ? (
+    <>
+      {isRunningTabata && tabataData ? (
         <WorkoutScreen
-          stationRounds={config.rounds}
-          work={config.work}
-          rest={config.rest}
-          stations={config.stations}
+          stations={tabataData.stations}
+          rounds={tabataData.rounds}
+          work={tabataData.work}
+          rest={tabataData.rest}
+          onBack={handleBackToDashboard}
         />
       ) : (
-        <TabataDashboard onStart={handleStart} />
+        <TabataDashboard onStart={handleStartTabata} />
       )}
-    </Box>
+    </>
   );
 }
 

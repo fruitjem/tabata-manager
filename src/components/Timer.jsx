@@ -1,25 +1,25 @@
-// Timer.jsx - fix: ripristina lavoro come prima fase a ogni nuova stazione
+// Timer.jsx - usa import Vite per beep.mp3
 
 import { useEffect, useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
 import LinearProgress from '@mui/material/LinearProgress';
+import beepSound from '../assets/sounds/beep.mp3';
 
-const beep = new Audio('/beep.mp3');
+const beep = new Audio(beepSound);
 
 function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, totalStations }) {
   const [round, setRound] = useState(0);
+  const [station, setStation] = useState(0);
   const [timeLeft, setTimeLeft] = useState(work * 1000);
   const [isWorkPhase, setIsWorkPhase] = useState(true);
   const [isRunning, setIsRunning] = useState(false);
   const [preparing, setPreparing] = useState(true);
   const [prepTimeLeft, setPrepTimeLeft] = useState(3);
   const [elapsedTime, setElapsedTime] = useState(0);
-  const [station, setStation] = useState(0);
 
-  const totalRoundsAllStations = stationRounds * totalStations;
-  const totalDurationAllStations = (work + rest) * totalRoundsAllStations; // in seconds
+  const totalDuration = stationRounds * totalStations * (work + rest);
 
   useEffect(() => {
     if (!isRunning || !preparing) return;
@@ -49,22 +49,17 @@ function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, tota
           if (!isWorkPhase) {
             const nextRound = round + 1;
             if (nextRound >= stationRounds) {
-              if (station + 1 < totalStations) {
-                const nextStation = station + 1;
-                setStation(nextStation);
-                onStationChange(nextStation);
-                setRound(0);
-                setElapsedTime((prevElapsed) => prevElapsed + 10);
-                setIsWorkPhase(true); // 💡 reset a WORK phase
-                setPreparing(true);
-                setPrepTimeLeft(3);
-                return work * 1000;
-              } else {
-                setElapsedTime((prevElapsed) => prevElapsed + 10);
+              const nextStation = station + 1;
+              if (nextStation >= totalStations) {
                 clearInterval(interval);
                 setIsRunning(false);
                 return 0;
               }
+              setStation(nextStation);
+              setRound(0);
+              onStationChange(nextStation);
+              setIsWorkPhase(true);
+              return work * 1000;
             }
             setRound(nextRound);
             onRoundChange(nextRound);
@@ -107,19 +102,16 @@ function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, tota
   };
 
   const { minutes, seconds, centis } = formatTimeParts(timeLeft);
-
-  const progress = Math.min((elapsedTime / (totalDurationAllStations * 1000)) * 100, 100);
+  const progress = Math.min((elapsedTime / (totalDuration * 1000)) * 100, 100);
   const phaseColor = isWorkPhase ? 'success' : 'info';
-  const boxBg = isWorkPhase ? '#2e7d32' : '#f9a825';
-  const label = isWorkPhase ? 'LAVORO' : 'RIPOSO';
 
   return (
     <Box textAlign="center" mb={4}>
       <Typography variant="h5" gutterBottom>
-        Round {round + 1} / {stationRounds} | Stazione {station + 1} / {totalStations}
+        Stazione {station + 1} / {totalStations} - Round {round + 1} / {stationRounds}
       </Typography>
       <Typography variant="subtitle1">
-        Durata totale: {Math.floor(totalDurationAllStations / 60)}m {totalDurationAllStations % 60}s |
+        Durata totale: {Math.floor(totalDuration / 60)}m {totalDuration % 60}s |
         Trascorso: {Math.floor((elapsedTime / 1000) / 60)}m {Math.floor((elapsedTime / 1000) % 60)}s
       </Typography>
 
@@ -127,22 +119,23 @@ function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, tota
         <LinearProgress variant="determinate" value={progress} color={phaseColor} sx={{ height: 10, borderRadius: 2 }} />
       </Box>
 
-      <Box sx={{
-        backgroundColor: boxBg,
-        borderRadius: 2,
-        px: 6,
-        py: 4,
-        my: 2,
-        display: 'inline-block',
-        color: '#fff'
-      }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-          {label}
+      <Box
+        sx={{
+          backgroundColor: isWorkPhase ? '#2e7d32' : '#f9a825',
+          borderRadius: 2,
+          px: 4,
+          py: 2,
+          my: 2,
+          display: 'inline-block',
+        }}
+      >
+        <Typography variant="body2" color="white">
+          {isWorkPhase ? 'LAVORO' : 'RIPOSO'}
         </Typography>
-        <Typography variant="h1" sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+        <Typography variant="h2" sx={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'white' }}>
           {minutes}:{seconds}.{centis}
         </Typography>
-        <Typography variant="caption" display="block" sx={{ color: '#fff', mt: 1 }}>
+        <Typography variant="caption" display="block" sx={{ color: '#eee', mt: 1 }}>
           MM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CC
         </Typography>
       </Box>

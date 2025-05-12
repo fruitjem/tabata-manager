@@ -1,4 +1,4 @@
-// WorkoutScreen.jsx - mostra esercizio corretto per ogni round/stazione
+// WorkoutScreen.jsx - aggiunto tasto "Torna alla Dashboard"
 
 import { useState } from 'react';
 import Typography from '@mui/material/Typography';
@@ -7,27 +7,9 @@ import Button from '@mui/material/Button';
 import Timer from './Timer';
 import StationList from './StationList';
 
-function WorkoutScreen({ stationRounds, work, rest, stations }) {
+function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentStation, setCurrentStation] = useState(0);
-
-  console.log('WorkoutScreen stations:', stations);
-
-
-  // Mappa stazioni con esercizi ripetuti o ciclici in base al numero di round
-  const mappedStations = stations.map((station) => {
-    const exercises = Array.from({ length: stationRounds }).map((_, i) => {
-      const ex = station.exercises[i % station.exercises.length];
-      return {
-        name: ex.name,
-        gif: ex.gif,
-      };
-    });
-    return {
-      name: station.name,
-      exercises,
-    };
-  });
 
   return (
     <Box
@@ -44,23 +26,23 @@ function WorkoutScreen({ stationRounds, work, rest, stations }) {
         09K-Tabata
       </Typography>
 
+      <Button onClick={onBack} variant="outlined" sx={{ mb: 2 }}>
+        🔙 Torna alla Dashboard
+      </Button>
+
       <Box sx={{ width: '100%', maxWidth: 600 }}>
         <Timer
-          stationRounds={stationRounds}
+          stationRounds={rounds}
           work={work}
           rest={rest}
           onRoundChange={setCurrentRound}
           onStationChange={setCurrentStation}
-          totalStations={mappedStations.length}
+          totalStations={stations.length}
         />
       </Box>
 
       <Box sx={{ width: '100%', maxWidth: 960, mt: 4 }}>
-        <StationList
-          stations={mappedStations}
-          currentRound={currentRound}
-          currentStation={currentStation}
-        />
+        <StationList stations={stations} currentRound={currentRound} currentStation={currentStation} />
       </Box>
     </Box>
   );
