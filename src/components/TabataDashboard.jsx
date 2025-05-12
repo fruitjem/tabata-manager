@@ -1,6 +1,6 @@
-// TabataDashboard.jsx - larghezza fissa per i Select esercizi
+// TabataDashboard.jsx - i Tabata salvati spostati a sinistra come sidebar
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -13,11 +13,17 @@ import {
   FormControl,
   InputLabel,
   IconButton,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import exerciseOptions from './exercises';
 
 function TabataDashboard({ onStart }) {
+  const [tabataName, setTabataName] = useState('');
   const [rounds, setRounds] = useState(3);
   const [work, setWork] = useState(20);
   const [rest, setRest] = useState(10);
@@ -27,6 +33,12 @@ function TabataDashboard({ onStart }) {
       exercises: [{ name: '', gif: '' }],
     },
   ]);
+  const [savedTabatas, setSavedTabatas] = useState([]);
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('savedTabatas')) || [];
+    setSavedTabatas(saved);
+  }, []);
 
   const handleStationChange = (index, value) => {
     const updated = [...stations];
@@ -66,112 +78,160 @@ function TabataDashboard({ onStart }) {
     ]);
   };
 
+  const saveTabata = () => {
+    if (!tabataName) return;
+    const newTabata = {
+      id: Date.now(),
+      name: tabataName,
+      rounds,
+      work,
+      rest,
+      stations,
+    };
+    const updated = [...savedTabatas, newTabata];
+    localStorage.setItem('savedTabatas', JSON.stringify(updated));
+    setSavedTabatas(updated);
+    setTabataName('');
+  };
+
   const handleStart = () => {
     onStart({ rounds, work, rest, stations });
   };
 
+  const loadTabata = (tabata) => {
+    setTabataName(tabata.name);
+    setRounds(tabata.rounds);
+    setWork(tabata.work);
+    setRest(tabata.rest);
+    setStations(tabata.stations);
+  };
+
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'start',
-        minHeight: '100vh',
-        width: '100%',
-        px: 2,
-      }}
-    >
-      <Box sx={{ maxWidth: 900, width: '100%', textAlign: 'center', py: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          Crea il tuo allenamento Tabata
-        </Typography>
-
-        <Box display="flex" justifyContent="center" gap={2} mb={4} flexWrap="wrap">
-          <TextField
-            label="Round per stazione"
-            type="number"
-            value={rounds}
-            onChange={(e) => setRounds(parseInt(e.target.value))}
-          />
-          <TextField
-            label="Durata LAVORO (s)"
-            type="number"
-            value={work}
-            onChange={(e) => setWork(parseInt(e.target.value))}
-          />
-          <TextField
-            label="Durata RIPOSO (s)"
-            type="number"
-            value={rest}
-            onChange={(e) => setRest(parseInt(e.target.value))}
-          />
-        </Box>
-
-        <Typography variant="h6" gutterBottom>
-          Stazioni:
-        </Typography>
-
-        <Grid container spacing={2} justifyContent="center">
-          {stations.map((station, sIndex) => (
-            <Grid item xs={12} md={6} key={sIndex}>
-              <Paper elevation={2} sx={{ p: 2, textAlign: 'left' }}>
-                <TextField
-                  fullWidth
-                  label="Nome stazione"
-                  value={station.name}
-                  onChange={(e) => handleStationChange(sIndex, e.target.value)}
-                  sx={{ mb: 2 }}
-                />
-                <Typography variant="subtitle2" gutterBottom>
-                  Esercizi:
-                </Typography>
-                {station.exercises.map((ex, eIndex) => (
-                  <Box key={eIndex} display="flex" alignItems="center" gap={1} mb={1}>
-                    <FormControl sx={{ width: 300 }}>
-                      <InputLabel>Seleziona esercizio</InputLabel>
-                      <Select
-                        value={ex.name}
-                        label="Seleziona esercizio"
-                        onChange={(e) =>
-                          handleExerciseChange(sIndex, eIndex, e.target.value)
-                        }
-                      >
-                        {exerciseOptions.map((option) => (
-                          <MenuItem key={option.name} value={option.name}>
-                            {option.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <IconButton
-                      aria-label="rimuovi"
-                      onClick={() => removeExerciseFromStation(sIndex, eIndex)}
-                      disabled={station.exercises.length <= 1}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  onClick={() => addExerciseToStation(sIndex)}
-                  size="small"
-                >
-                  + Aggiungi esercizio
-                </Button>
-              </Paper>
-            </Grid>
+    <Box sx={{ display: 'flex', minHeight: '100vh', width: '100%' }}>
+      <Box sx={{ width: 250, bgcolor: '#1e1e1e', p: 2 }}>
+        <span style={{ display: 'block', textAlign: 'center' }}>Tabata salvati</span>
+        <Divider sx={{ mb: 1, bgcolor: '#444' }} />
+        <List>
+          {savedTabatas.map((t) => (
+            <ListItem key={t.id} disablePadding>
+              <ListItemButton onClick={() => loadTabata(t)}>
+                <ListItemText primary={t.name} primaryTypographyProps={{ color: 'white' }} />
+              </ListItemButton>
+            </ListItem>
           ))}
-        </Grid>
+        </List>
+      </Box>
 
-        <Button onClick={addStation} sx={{ mt: 3 }} variant="outlined">
-          + Aggiungi Stazione
-        </Button>
+      <Box
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'start',
+          px: 2,
+          py: 4,
+        }}
+      >
+        <Box sx={{ maxWidth: 900, width: '100%', textAlign: 'center' }}>
+          <Typography variant="h4" gutterBottom>
+            Crea il tuo allenamento Tabata
+          </Typography>
 
-        <Box mt={4}>
-          <Button onClick={handleStart} variant="contained" color="primary">
-            Avvia Tabata
+          <Box display="flex" justifyContent="center" gap={2} mb={4} flexWrap="wrap">
+            <TextField
+              label="Nome Tabata"
+              value={tabataName}
+              onChange={(e) => setTabataName(e.target.value)}
+            />
+            <TextField
+              label="Round per stazione"
+              type="number"
+              value={rounds}
+              onChange={(e) => setRounds(parseInt(e.target.value))}
+            />
+            <TextField
+              label="Durata LAVORO (s)"
+              type="number"
+              value={work}
+              onChange={(e) => setWork(parseInt(e.target.value))}
+            />
+            <TextField
+              label="Durata RIPOSO (s)"
+              type="number"
+              value={rest}
+              onChange={(e) => setRest(parseInt(e.target.value))}
+            />
+          </Box>
+
+          <Typography variant="h6" gutterBottom>
+            Stazioni:
+          </Typography>
+
+          <Grid container spacing={2} justifyContent="center">
+            {stations.map((station, sIndex) => (
+              <Grid item xs={12} md={6} key={sIndex}>
+                <Paper elevation={2} sx={{ p: 2, textAlign: 'left' }}>
+                  <TextField
+                    fullWidth
+                    label="Nome stazione"
+                    value={station.name}
+                    onChange={(e) => handleStationChange(sIndex, e.target.value)}
+                    sx={{ mb: 2 }}
+                  />
+                  <Typography variant="subtitle2" gutterBottom>
+                    Esercizi:
+                  </Typography>
+                  {station.exercises.map((ex, eIndex) => (
+                    <Box key={eIndex} display="flex" alignItems="center" gap={1} mb={1}>
+                      <FormControl sx={{ width: 300 }}>
+                        <InputLabel>Seleziona esercizio</InputLabel>
+                        <Select
+                          value={ex.name}
+                          label="Seleziona esercizio"
+                          onChange={(e) =>
+                            handleExerciseChange(sIndex, eIndex, e.target.value)
+                          }
+                        >
+                          {exerciseOptions.map((option) => (
+                            <MenuItem key={option.name} value={option.name}>
+                              {option.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                      <IconButton
+                        aria-label="rimuovi"
+                        onClick={() => removeExerciseFromStation(sIndex, eIndex)}
+                        disabled={station.exercises.length <= 1}
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  ))}
+                  <Button
+                    variant="outlined"
+                    onClick={() => addExerciseToStation(sIndex)}
+                    size="small"
+                  >
+                    + Aggiungi esercizio
+                  </Button>
+                </Paper>
+              </Grid>
+            ))}
+          </Grid>
+
+          <Button onClick={addStation} sx={{ mt: 3 }} variant="outlined">
+            + Aggiungi Stazione
           </Button>
+
+          <Box mt={4} display="flex" gap={2} justifyContent="center">
+            <Button onClick={saveTabata} variant="outlined">
+              Salva Tabata
+            </Button>
+            <Button onClick={handleStart} variant="contained" color="primary">
+              Avvia Tabata
+            </Button>
+          </Box>
         </Box>
       </Box>
     </Box>
