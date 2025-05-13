@@ -1,159 +1,143 @@
-// Timer.jsx - usa import Vite per beep.mp3
+// Timer.jsx - fix finale: conteggia correttamente ogni secondo incluso quello finale
 
-import { useEffect, useState } from 'react';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import LinearProgress from '@mui/material/LinearProgress';
-import beepSound from '../assets/sounds/beep.mp3';
+import { useEffect, useRef, useState } from 'react';
+import { Box, Typography, Button, LinearProgress } from '@mui/material';
 
-const beep = new Audio(beepSound);
-
-function Timer({ stationRounds, work, rest, onRoundChange, onStationChange, totalStations }) {
-  const [round, setRound] = useState(0);
-  const [station, setStation] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(work * 1000);
-  const [isWorkPhase, setIsWorkPhase] = useState(true);
+function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, onComplete }) {
   const [isRunning, setIsRunning] = useState(false);
+  const [isWorkTime, setIsWorkTime] = useState(true);
+  const [timeLeft, setTimeLeft] = useState(work);
+  const [currentRound, setCurrentRound] = useState(0);
+  const [currentStation, setCurrentStation] = useState(0);
+  const [elapsed, setElapsed] = useState(0);
   const [preparing, setPreparing] = useState(true);
-  const [prepTimeLeft, setPrepTimeLeft] = useState(3);
-  const [elapsedTime, setElapsedTime] = useState(0);
 
-  const totalDuration = stationRounds * totalStations * (work + rest);
+  const timerRef = useRef(null);
 
-  useEffect(() => {
-    if (!isRunning || !preparing) return;
+  const totalStations = stations.length;
+  const totalDuration =
+    Number(rounds) * Number(totalStations) * (Number(work) + Number(rest));
 
-    const prepInterval = setInterval(() => {
-      setPrepTimeLeft((prev) => {
-        if (prev <= 1) {
-          clearInterval(prepInterval);
-          setPreparing(false);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(prepInterval);
-  }, [isRunning, preparing]);
-
-  useEffect(() => {
-    if (!isRunning || preparing) return;
-
-    const interval = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 10) {
-          beep.play();
-
-          if (!isWorkPhase) {
-            const nextRound = round + 1;
-            if (nextRound >= stationRounds) {
-              const nextStation = station + 1;
-              if (nextStation >= totalStations) {
-                clearInterval(interval);
-                setIsRunning(false);
-                return 0;
-              }
-              setStation(nextStation);
-              setRound(0);
-              onStationChange(nextStation);
-              setIsWorkPhase(true);
-              return work * 1000;
-            }
-            setRound(nextRound);
-            onRoundChange(nextRound);
-          }
-
-          setIsWorkPhase(!isWorkPhase);
-          return isWorkPhase ? rest * 1000 : work * 1000;
-        }
-        return prev - 10;
-      });
-
-      setElapsedTime((prev) => prev + 10);
-    }, 10);
-
-    return () => clearInterval(interval);
-  }, [isRunning, preparing, round, isWorkPhase, station]);
-
-  const handleStartPause = () => {
-    setIsRunning(!isRunning);
-  };
-
-  const handleReset = () => {
+  const resetTimer = () => {
+    clearInterval(timerRef.current);
     setIsRunning(false);
-    setRound(0);
-    setIsWorkPhase(true);
-    setTimeLeft(work * 1000);
+    setIsWorkTime(true);
+    setTimeLeft(work);
+    setCurrentRound(0);
+    setCurrentStation(0);
+    setElapsed(0);
     setPreparing(true);
-    setPrepTimeLeft(3);
-    setElapsedTime(0);
-    setStation(0);
     onRoundChange(0);
     onStationChange(0);
   };
 
-  const formatTimeParts = (ms) => {
-    const minutes = String(Math.floor(ms / 60000)).padStart(2, '0');
-    const seconds = String(Math.floor((ms % 60000) / 1000)).padStart(2, '0');
-    const centis = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
-    return { minutes, seconds, centis };
+  const startTimer = () => {
+    setIsRunning(true);
+    setPreparing(false);
   };
 
-  const { minutes, seconds, centis } = formatTimeParts(timeLeft);
-  const progress = Math.min((elapsedTime / (totalDuration * 1000)) * 100, 100);
-  const phaseColor = isWorkPhase ? 'success' : 'info';
+  useEffect(() => {
+    if (!isRunning || preparing) return;
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          setElapsed((e) => e + 1); // ✅ conteggia sempre il secondo finale
+
+          if (isWorkTime) {
+            setIsWorkTime(false);
+            return rest;
+          } else {
+            setIsWorkTime(true);
+            const nextRound = currentRound + 1;
+            if (nextRound >= rounds) {
+              const nextStation = currentStation + 1;
+              if (nextStation >= totalStations) {
+                setTimeout(() => {
+                  clearInterval(timerRef.current);
+                  setIsRunning(false);
+                  onComplete?.();
+                }, 0);
+                return 0;
+              } else {
+                setCurrentStation(nextStation);
+                setCurrentRound(0);
+                onStationChange(nextStation);
+                onRoundChange(0);
+                return work;
+              }
+            } else {
+              setCurrentRound(nextRound);
+              onRoundChange(nextRound);
+              return work;
+            }
+          }
+        }
+
+        setElapsed((e) => e + 1);
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timerRef.current);
+  }, [isRunning, preparing, isWorkTime, currentRound, currentStation]);
+
+  useEffect(() => {
+    if (!isRunning && !preparing && elapsed < totalDuration) {
+      setElapsed(totalDuration);
+    }
+  }, [isRunning, preparing, elapsed, totalDuration]);
+
+  useEffect(() => {
+    onRoundChange(0);
+    onStationChange(0);
+  }, []);
+
+  const formatTime = (seconds) => {
+    const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
+    const ss = String(seconds % 60).padStart(2, '0');
+    return `${mm}:${ss}`;
+  };
 
   return (
-    <Box textAlign="center" mb={4}>
-      <Typography variant="h5" gutterBottom>
-        Stazione {station + 1} / {totalStations} - Round {round + 1} / {stationRounds}
+    <Box textAlign="center">
+      <Typography variant="h6" gutterBottom>
+        Stazione {currentStation + 1} / {stations.length} - Round {currentRound + 1} / {rounds}
       </Typography>
-      <Typography variant="subtitle1">
-        Durata totale: {Math.floor(totalDuration / 60)}m {totalDuration % 60}s |
-        Trascorso: {Math.floor((elapsedTime / 1000) / 60)}m {Math.floor((elapsedTime / 1000) % 60)}s
+      <Typography variant="body2" gutterBottom>
+        Durata totale: {formatTime(totalDuration)} | Trascorso: {formatTime(elapsed)}
       </Typography>
-
-      <Box my={2}>
-        <LinearProgress variant="determinate" value={progress} color={phaseColor} sx={{ height: 10, borderRadius: 2 }} />
-      </Box>
-
+      <LinearProgress
+        variant="determinate"
+        value={(elapsed / totalDuration) * 100}
+        sx={{ height: 10, borderRadius: 5, my: 2 }}
+      />
       <Box
         sx={{
-          backgroundColor: isWorkPhase ? '#2e7d32' : '#f9a825',
+          backgroundColor: isWorkTime ? 'green' : 'goldenrod',
+          color: 'white',
           borderRadius: 2,
-          px: 4,
-          py: 2,
+          p: 2,
           my: 2,
-          display: 'inline-block',
         }}
       >
-        <Typography variant="body2" color="white">
-          {isWorkPhase ? 'LAVORO' : 'RIPOSO'}
+        <Typography variant="h6" gutterBottom>
+          {isWorkTime ? 'LAVORO' : 'PAUSA'}
         </Typography>
-        <Typography variant="h2" sx={{ fontFamily: 'monospace', fontWeight: 'bold', color: 'white' }}>
-          {minutes}:{seconds}.{centis}
-        </Typography>
-        <Typography variant="caption" display="block" sx={{ color: '#eee', mt: 1 }}>
-          MM&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;SS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;CC
-        </Typography>
+        <Typography variant="h3">{formatTime(timeLeft)}</Typography>
       </Box>
-
-      {preparing && (
-        <Typography variant="h4" color="warning.main">
-          PREPARATI: {prepTimeLeft}
-        </Typography>
+      {!isRunning ? (
+        <Button variant="contained" onClick={startTimer} sx={{ mr: 2 }}>
+          START
+        </Button>
+      ) : (
+        <Button variant="outlined" color="warning" onClick={() => setIsRunning(false)} sx={{ mr: 2 }}>
+          PAUSA
+        </Button>
       )}
-
-      <Box mt={2} display="flex" justifyContent="center" gap={2}>
-        <Button variant="contained" color={isRunning ? 'warning' : 'success'} onClick={handleStartPause}>
-          {isRunning ? 'Pausa' : 'Start'}
-        </Button>
-        <Button variant="outlined" color="error" onClick={handleReset}>
-          Reset
-        </Button>
-      </Box>
+      <Button variant="outlined" color="error" onClick={resetTimer}>
+        RESET
+      </Button>
     </Box>
   );
 }
