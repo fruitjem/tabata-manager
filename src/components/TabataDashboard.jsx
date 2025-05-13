@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - aggiunta eliminazione con conferma
+// TabataDashboard.jsx - aggiornato per arricchire gli esercizi con le GIF
 
 import { useState, useEffect } from 'react';
 import {
@@ -88,16 +88,29 @@ function TabataDashboard({ onStart }) {
     ]);
   };
 
+  function enrichExerciseByName(name) {
+    const match = exerciseOptions.find((e) => e.name === name);
+    return {
+      name,
+      gif: match?.gif || '',
+    };
+  }
+
   const saveTabata = () => {
     if (!tabataName) return;
+
     const newTabata = {
       id: Date.now(),
       name: tabataName,
       rounds,
       work,
       rest,
-      stations,
+      stations: stations.map((station) => ({
+        ...station,
+        exercises: station.exercises.map((ex) => enrichExerciseByName(ex.name)),
+      })),
     };
+
     repo.save(newTabata);
     setSavedTabatas(repo.getAll());
     setTabataName('');
