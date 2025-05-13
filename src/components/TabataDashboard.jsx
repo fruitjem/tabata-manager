@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - aggiornato per usare electron-store
+// TabataDashboard.jsx - aggiornato per usare localStorage via repository
 
 import { useState, useEffect } from 'react';
 import {
@@ -21,6 +21,9 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import exerciseOptions from './exercises';
+import TabataRepository from '@/repositories/TabataRepository';
+
+const repo = new TabataRepository();
 
 function TabataDashboard({ onStart }) {
   const [tabataName, setTabataName] = useState('');
@@ -36,15 +39,7 @@ function TabataDashboard({ onStart }) {
   const [savedTabatas, setSavedTabatas] = useState([]);
 
   useEffect(() => {
-    console.log('[REACT] window.store:', window.store);
-    if (!window.store) {
-      console.error('❌ store non disponibile: preload non caricato correttamente');
-      return;
-    }
-
-    const saved = window.store.get('savedTabatas') || [];
-    console.log('[REACT] Tabata caricati:', saved);
-    setSavedTabatas(saved);
+    setSavedTabatas(repo.getAll());
   }, []);
 
   const handleStationChange = (index, value) => {
@@ -95,9 +90,8 @@ function TabataDashboard({ onStart }) {
       rest,
       stations,
     };
-    const updated = [...savedTabatas, newTabata];
-    window.store?.set('savedTabatas', updated);
-    setSavedTabatas(updated);
+    repo.save(newTabata);
+    setSavedTabatas(repo.getAll());
     setTabataName('');
   };
 

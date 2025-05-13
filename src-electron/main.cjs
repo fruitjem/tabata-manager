@@ -2,17 +2,16 @@ const { app, BrowserWindow } = require('electron');
 const path = require('path');
 
 function createWindow() {
-  const mainWindow = new BrowserWindow({
+  const win = new BrowserWindow({
     width: 1200,
     height: 800,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
-      preload: path.resolve(app.getAppPath(), 'preload.cjs'),
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
+  win.loadFile(path.join(__dirname, '../dist/index.html'));
 }
 
 app.whenReady().then(createWindow);
