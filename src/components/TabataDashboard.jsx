@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - aggiornato per usare localStorage via repository
+// TabataDashboard.jsx - aggiunta eliminazione con conferma
 
 import { useState, useEffect } from 'react';
 import {
@@ -41,6 +41,14 @@ function TabataDashboard({ onStart }) {
   useEffect(() => {
     setSavedTabatas(repo.getAll());
   }, []);
+
+  const handleDelete = (id) => {
+    const confirmed = window.confirm('Sei sicuro di voler eliminare questo Tabata?');
+    if (confirmed) {
+      repo.delete(id);
+      setSavedTabatas(repo.getAll());
+    }
+  };
 
   const handleStationChange = (index, value) => {
     const updated = [...stations];
@@ -117,7 +125,13 @@ function TabataDashboard({ onStart }) {
         <Divider sx={{ mb: 1, bgcolor: '#444' }} />
         <List>
           {savedTabatas.map((t) => (
-            <ListItem key={t.id} disablePadding>
+            <ListItem key={t.id} disablePadding
+              secondaryAction={
+                <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(t.id)}>
+                  <DeleteIcon sx={{ color: 'white' }} />
+                </IconButton>
+              }
+            >
               <ListItemButton onClick={() => loadTabata(t)}>
                 <ListItemText primary={t.name} primaryTypographyProps={{ color: 'white' }} />
               </ListItemButton>
