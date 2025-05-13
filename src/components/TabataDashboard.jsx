@@ -36,7 +36,14 @@ function TabataDashboard({ onStart }) {
   const [savedTabatas, setSavedTabatas] = useState([]);
 
   useEffect(() => {
-    const saved = window.store?.get('savedTabatas') || [];
+    console.log('[REACT] window.store:', window.store);
+    if (!window.store) {
+      console.error('❌ store non disponibile: preload non caricato correttamente');
+      return;
+    }
+
+    const saved = window.store.get('savedTabatas') || [];
+    console.log('[REACT] Tabata caricati:', saved);
     setSavedTabatas(saved);
   }, []);
 

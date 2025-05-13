@@ -1,11 +1,21 @@
 // preload.cjs
 const { contextBridge } = require('electron');
 const Store = require('electron-store');
+
 const store = new Store();
 
-console.log('[PRELOAD] preload loaded');
-
+// Espone le funzioni al renderer
 contextBridge.exposeInMainWorld('store', {
-  get: (key) => store.get(key),
-  set: (key, value) => store.set(key, value),
+  get: (key) => {
+    console.log('[PRELOAD] GET key:', key);
+    return store.get(key);
+  },
+  set: (key, value) => {
+    console.log('[PRELOAD] SET key:', key, 'value:', value);
+    return store.set(key, value);
+  },
+  delete: (key) => {
+    console.log('[PRELOAD] DELETE key:', key);
+    return store.delete(key);
+  },
 });
