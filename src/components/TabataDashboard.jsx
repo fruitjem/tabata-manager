@@ -18,12 +18,18 @@ import {
   ListItemButton,
   ListItemText,
   Divider,
+  Autocomplete,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import exerciseOptions from './exercises';
 import TabataRepository from '@/repositories/TabataRepository';
 
 const repo = new TabataRepository();
+
+// Sort exercises alphabetically
+const sortedExercises = [...exerciseOptions].sort((a, b) => 
+  a.name.localeCompare(b.name, 'it', { sensitivity: 'base' })
+);
 
 function TabataDashboard({ onStart }) {
   const [tabataName, setTabataName] = useState('');
@@ -56,11 +62,11 @@ function TabataDashboard({ onStart }) {
     setStations(updated);
   };
 
-  const handleExerciseChange = (stationIndex, exerciseIndex, value) => {
-    const exercise = exerciseOptions.find((e) => e.name.trim().toLowerCase() === value.trim().toLowerCase());
+  const handleExerciseChange = (stationIndex, exerciseIndex, newValue) => {
+    const exercise = sortedExercises.find((e) => e.name === newValue);
     const updated = [...stations];
     updated[stationIndex].exercises[exerciseIndex] = {
-      name: value,
+      name: newValue || '',
       gif: exercise?.gif || '',
     };
     setStations(updated);
@@ -217,20 +223,27 @@ function TabataDashboard({ onStart }) {
                   {station.exercises.map((ex, eIndex) => (
                     <Box key={eIndex} display="flex" alignItems="center" gap={1} mb={1}>
                       <FormControl sx={{ width: 300 }}>
-                        <InputLabel>Seleziona esercizio</InputLabel>
-                        <Select
+                        <Autocomplete
                           value={ex.name}
-                          label="Seleziona esercizio"
-                          onChange={(e) =>
-                            handleExerciseChange(sIndex, eIndex, e.target.value)
+                          onChange={(event, newValue) => 
+                            handleExerciseChange(sIndex, eIndex, newValue)
                           }
-                        >
-                          {exerciseOptions.map((option) => (
-                            <MenuItem key={option.name} value={option.name}>
-                              {option.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
+                          options={sortedExercises.map(option => option.name)}
+                          renderInput={(params) => (
+                            <TextField 
+                              {...params} 
+                              label="Cerca esercizio"
+                              placeholder="Digita per cercare..."
+                            />
+                          )}
+                          freeSolo
+                          autoSelect
+                          blurOnSelect
+                          openOnFocus
+                          selectOnFocus
+                          clearOnBlur={false}
+                          sx={{ width: '100%' }}
+                        />
                       </FormControl>
                       <IconButton
                         aria-label="rimuovi"
