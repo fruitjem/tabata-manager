@@ -12,6 +12,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
   const [elapsed, setElapsed] = useState(0);
   const [preparing, setPreparing] = useState(true);
   const [prepTime, setPrepTime] = useState(10); // 10 seconds preparation time
+  const [isPaused, setIsPaused] = useState(false);
 
   const timerRef = useRef(null);
   const beepRef = useRef(new Audio('./sounds/beep.mp3'));
@@ -28,6 +29,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
   const resetTimer = () => {
     clearInterval(timerRef.current);
     setIsRunning(false);
+    setIsPaused(false);
     setIsWorkTime(true);
     setTimeLeft(work);
     setCurrentRound(0);
@@ -41,7 +43,13 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
 
   const startTimer = () => {
     setIsRunning(true);
+    setIsPaused(false);
     playBeep(); // Play beep when starting preparation
+  };
+
+  const pauseTimer = () => {
+    setIsRunning(false);
+    setIsPaused(true);
   };
 
   useEffect(() => {
@@ -86,6 +94,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
                 setTimeout(() => {
                   clearInterval(timerRef.current);
                   setIsRunning(false);
+                  setIsPaused(false);
                   onComplete?.();
                 }, 0);
                 return 0;
@@ -111,12 +120,6 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
 
     return () => clearInterval(timerRef.current);
   }, [isRunning, preparing, isWorkTime, currentRound, currentStation]);
-
-  useEffect(() => {
-    if (!isRunning && !preparing && elapsed < totalDuration) {
-      setElapsed(totalDuration);
-    }
-  }, [isRunning, preparing, elapsed, totalDuration]);
 
   useEffect(() => {
     onRoundChange(0);
@@ -201,7 +204,15 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
           <LinearProgress
             variant="determinate"
             value={(elapsed / totalDuration) * 100}
-            sx={{ height: 10, borderRadius: 5, my: 2 }}
+            sx={{ 
+              height: 10, 
+              borderRadius: 5, 
+              my: 2,
+              opacity: isPaused ? 0.7 : 1,
+              '& .MuiLinearProgress-bar': {
+                transition: isPaused ? 'none' : 'transform 0.4s linear',
+              },
+            }}
           />
           <Box
             sx={{
@@ -210,6 +221,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
               borderRadius: 2,
               p: 3,
               my: 2,
+              opacity: isPaused ? 0.8 : 1,
             }}
           >
             <Typography variant="h6" gutterBottom>
@@ -257,10 +269,10 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
       <Box sx={{ mt: 2 }}>
         {!isRunning ? (
           <Button variant="contained" onClick={startTimer} sx={{ mr: 2 }}>
-            START
+            {isPaused ? 'RIPRENDI' : 'START'}
           </Button>
         ) : (
-          <Button variant="outlined" color="warning" onClick={() => setIsRunning(false)} sx={{ mr: 2 }}>
+          <Button variant="outlined" color="warning" onClick={pauseTimer} sx={{ mr: 2 }}>
             PAUSA
           </Button>
         )}

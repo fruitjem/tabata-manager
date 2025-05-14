@@ -21,6 +21,8 @@ import {
   Autocomplete,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import exerciseOptions from './exercises';
 import TabataRepository from '@/repositories/TabataRepository';
 
@@ -94,6 +96,14 @@ function TabataDashboard({ onStart }) {
     ]);
   };
 
+  const removeStation = (stationIndex) => {
+    if (stations.length <= 1) {
+      return; // Mantieni almeno una stazione
+    }
+    const updatedStations = stations.filter((_, index) => index !== stationIndex);
+    setStations(updatedStations);
+  };
+
   function enrichExerciseByName(name) {
     const match = exerciseOptions.find((e) => e.name === name);
     return {
@@ -133,6 +143,16 @@ function TabataDashboard({ onStart }) {
     setWork(tabata.work);
     setRest(tabata.rest);
     setStations(tabata.stations);
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(stations);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setStations(items);
   };
 
   return (
@@ -203,64 +223,137 @@ function TabataDashboard({ onStart }) {
           </Box>
 
           <Typography variant="h6" gutterBottom>
-            Stazioni:
+            Stazioni: (trascina per riordinare)
           </Typography>
 
-          <Grid container spacing={2} justifyContent="center">
-            {stations.map((station, sIndex) => (
-              <Grid item xs={12} md={6} key={sIndex}>
-                <Paper elevation={2} sx={{ p: 2, textAlign: 'left' }}>
-                  <TextField
-                    fullWidth
-                    label="Nome stazione"
-                    value={station.name}
-                    onChange={(e) => handleStationChange(sIndex, e.target.value)}
-                    sx={{ mb: 2 }}
-                  />
-                  <Typography variant="subtitle2" gutterBottom>
-                    Esercizi:
-                  </Typography>
-                  {station.exercises.map((ex, eIndex) => (
-                    <Box key={eIndex} display="flex" alignItems="center" gap={1} mb={1}>
-                      <FormControl sx={{ width: 300 }}>
-                        <Autocomplete
-                          value={ex.name}
-                          onChange={(event, newValue) => 
-                            handleExerciseChange(sIndex, eIndex, newValue)
-                          }
-                          options={sortedExercises.map(option => option.name)}
-                          renderInput={(params) => (
-                            <TextField 
-                              {...params} 
-                              label="Cerca esercizio"
-                              placeholder="Digita per cercare..."
-                            />
-                          )}
-                          freeSolo
-                          autoSelect
-                          blurOnSelect
-                          openOnFocus
-                          selectOnFocus
-                          clearOnBlur={false}
-                          sx={{ width: '100%' }}
-                        />
-                      </FormControl>
+          <Grid
+            container
+            spacing={2}
+            justifyContent="center"
+          >
+            {stations.map((station, index) => (
+              <Grid item xs={12} sm={6} key={index}>
+                <Paper
+                  elevation={1}
+                  sx={{
+                    backgroundColor: 'background.paper',
+                    width: '100%',
+                    position: 'relative',
+                    minWidth: '320px',
+                    p: 0,
+                  }}
+                >
+                  {/* Header Section */}
+                  <Box
+                    sx={{
+                      p: 2,
+                      backgroundColor: (theme) => 
+                        theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.05)' 
+                          : 'rgba(0, 0, 0, 0.03)',
+                      borderBottom: (theme) => `1px solid ${
+                        theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.1)' 
+                          : 'rgba(0, 0, 0, 0.1)'
+                      }`,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                    >
+                      <TextField
+                        size="small"
+                        value={station.name}
+                        onChange={(e) => handleStationChange(index, e.target.value)}
+                        sx={{
+                          '& .MuiInputBase-root': {
+                            backgroundColor: 'background.paper',
+                          },
+                        }}
+                      />
                       <IconButton
-                        aria-label="rimuovi"
-                        onClick={() => removeExerciseFromStation(sIndex, eIndex)}
-                        disabled={station.exercises.length <= 1}
+                        onClick={() => removeStation(index)}
+                        disabled={stations.length <= 1}
+                        size="small"
+                        sx={{
+                          color: stations.length <= 1 ? 'action.disabled' : 'error.main',
+                          '&:hover': {
+                            backgroundColor: stations.length <= 1 ? 'transparent' : 'error.dark',
+                          },
+                        }}
                       >
                         <DeleteIcon />
                       </IconButton>
                     </Box>
-                  ))}
-                  <Button
-                    variant="outlined"
-                    onClick={() => addExerciseToStation(sIndex)}
-                    size="small"
-                  >
-                    + Aggiungi esercizio
-                  </Button>
+                  </Box>
+
+                  {/* Exercises Section */}
+                  <Box sx={{ p: 2 }}>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        mb: 2,
+                        color: 'text.secondary',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Esercizi:
+                    </Typography>
+                    {station.exercises.map((ex, eIndex) => (
+                      <Box 
+                        key={eIndex} 
+                        display="flex" 
+                        alignItems="center" 
+                        gap={1} 
+                        mb={1}
+                      >
+                        <FormControl sx={{ width: 300 }}>
+                          <Autocomplete
+                            value={ex.name}
+                            onChange={(event, newValue) => 
+                              handleExerciseChange(index, eIndex, newValue)
+                            }
+                            options={sortedExercises.map(option => option.name)}
+                            renderInput={(params) => (
+                              <TextField 
+                                {...params} 
+                                label="Cerca esercizio"
+                                placeholder="Digita per cercare..."
+                                size="small"
+                              />
+                            )}
+                            freeSolo
+                            autoSelect
+                            blurOnSelect
+                            openOnFocus
+                            selectOnFocus
+                            clearOnBlur={false}
+                            sx={{ width: '100%' }}
+                          />
+                        </FormControl>
+                        <IconButton
+                          aria-label="rimuovi"
+                          onClick={() => removeExerciseFromStation(index, eIndex)}
+                          disabled={station.exercises.length <= 1}
+                          size="small"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
+                    ))}
+                    <Button
+                      variant="outlined"
+                      onClick={() => addExerciseToStation(index)}
+                      size="small"
+                      sx={{ mt: 1 }}
+                    >
+                      + Aggiungi esercizio
+                    </Button>
+                  </Box>
                 </Paper>
               </Grid>
             ))}

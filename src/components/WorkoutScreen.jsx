@@ -6,11 +6,14 @@ import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Grid from '@mui/material/Grid';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import Timer from './Timer';
 
-function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
+function WorkoutScreen({ stations: initialStations, rounds, work, rest, onBack }) {
   const [currentRound, setCurrentRound] = useState(0);
   const [currentStation, setCurrentStation] = useState(0);
+  const [stations, setStations] = useState(initialStations);
 
   const getGifPath = (gifPath) => {
     if (!gifPath) return '';
@@ -18,8 +21,19 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
     return isDev ? `/${gifPath}` : `./${gifPath}`;
   };
 
-  // Calculate number of cards per row (ceiling of total/2 to ensure even distribution)
-  const cardsPerRow = Math.ceil(stations.length / 2);
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const items = Array.from(stations);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setStations(items);
+  };
+
+  // Calculate number of cards per row based on total stations
+  const shouldSplitInTwoRows = stations.length > 4;
+  const cardsPerRow = shouldSplitInTwoRows ? Math.ceil(stations.length / 2) : stations.length;
 
   return (
     <Box
@@ -59,76 +73,105 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
         />
       </Box>
 
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: cardsPerRow * 320, // 320px per card (300px + margins)
-          px: 2,
-        }}
-      >
-        <Grid container spacing={2}>
-          {[...Array(2)].map((_, rowIndex) => (
-            <Grid item xs={12} key={rowIndex}>
-              <Grid container spacing={2} justifyContent="center">
-                {stations
-                  .slice(rowIndex * cardsPerRow, (rowIndex + 1) * cardsPerRow)
-                  .map((station, sIndex) => {
-                    const currentExercise =
-                      station.exercises[currentRound % station.exercises.length];
-
-                    return (
-                      <Grid item key={sIndex}>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <Droppable droppableId="workout-stations">
+          {(provided) => (
+            <Grid
+              container
+              spacing={2}
+              justifyContent="center"
+              {...provided.droppableProps}
+              ref={provided.innerRef}
+            >
+              {stations.map((station, index) => {
+                const currentExercise = station.exercises[currentRound % station.exercises.length];
+                
+                return (
+                  <Grid item xs={12} sm={stations.length > 4 ? 6 : 12} key={index}>
+                    <Draggable
+                      key={`station-${index}`}
+                      draggableId={`station-${index}`}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
                         <Box
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
                           sx={{
                             p: 2,
                             borderRadius: 2,
-                            boxShadow: 3,
-                            backgroundColor: '#2a2a2a',
+                            boxShadow: snapshot.isDragging ? 6 : 3,
+                            backgroundColor: snapshot.isDragging ? '#3a3a3a' : '#2a2a2a',
                             color: 'white',
-                            width: 300,
+                            transition: 'background-color 0.2s, box-shadow 0.2s',
+                            width: '100%',
+                            minWidth: '320px',
+                            position: 'relative',
                           }}
                         >
-                          <Typography variant="h6" gutterBottom>
-                            {station.name}
-                          </Typography>
-                          <Typography variant="subtitle1" gutterBottom>
-                            {currentExercise?.name || 'Esercizio'}
-                          </Typography>
-                          {currentExercise?.gif && (
-                            <Box
-                              sx={{
-                                width: '100%',
-                                height: 200,
-                                overflow: 'hidden',
-                                borderRadius: 2,
-                                mt: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                backgroundColor: '#1a1a1a',
-                              }}
-                            >
-                              <img
-                                src={getGifPath(currentExercise.gif)}
-                                alt={currentExercise.name}
-                                style={{
+                          <Box
+                            {...provided.dragHandleProps}
+                            sx={{
+                              position: 'absolute',
+                              left: 8,
+                              top: 8,
+                              cursor: 'grab',
+                              color: 'rgba(255, 255, 255, 0.7)',
+                              '&:hover': {
+                                color: 'white',
+                              },
+                            }}
+                          >
+                            <DragIndicatorIcon />
+                          </Box>
+                          
+                          <Box sx={{ pl: 4 }}>
+                            <Typography variant="h6">
+                              {station.name}
+                            </Typography>
+                            
+                            <Typography variant="subtitle1" gutterBottom>
+                              {currentExercise?.name || 'Esercizio'}
+                            </Typography>
+                            
+                            {currentExercise?.gif && (
+                              <Box
+                                sx={{
                                   width: '100%',
-                                  height: '100%',
-                                  objectFit: 'cover',
-                                  objectPosition: 'center',
+                                  height: 200,
+                                  overflow: 'hidden',
+                                  borderRadius: 2,
+                                  mt: 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  backgroundColor: '#1a1a1a',
                                 }}
-                              />
-                            </Box>
-                          )}
+                              >
+                                <img
+                                  src={getGifPath(currentExercise.gif)}
+                                  alt={currentExercise.name}
+                                  style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    objectFit: 'cover',
+                                    objectPosition: 'center',
+                                  }}
+                                />
+                              </Box>
+                            )}
+                          </Box>
                         </Box>
-                      </Grid>
-                    );
-                  })}
-              </Grid>
+                      )}
+                    </Draggable>
+                  </Grid>
+                );
+              })}
+              {provided.placeholder}
             </Grid>
-          ))}
-        </Grid>
-      </Box>
+          )}
+        </Droppable>
+      </DragDropContext>
     </Box>
   );
 }
