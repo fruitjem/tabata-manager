@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Grid from '@mui/material/Grid';
 import Timer from './Timer';
 
 function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
@@ -16,6 +17,9 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
     const isDev = import.meta.env.MODE === 'development';
     return isDev ? `/${gifPath}` : `./${gifPath}`;
   };
+
+  // Calculate number of cards per row (ceiling of total/2 to ensure even distribution)
+  const cardsPerRow = Math.ceil(stations.length / 2);
 
   return (
     <Box
@@ -57,64 +61,73 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
 
       <Box
         sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          justifyContent: 'center',
-          gap: 2,
+          width: '100%',
+          maxWidth: cardsPerRow * 320, // 320px per card (300px + margins)
           px: 2,
         }}
       >
-        {stations.map((station, sIndex) => {
-          const currentExercise =
-            station.exercises[currentRound % station.exercises.length];
+        <Grid container spacing={2}>
+          {[...Array(2)].map((_, rowIndex) => (
+            <Grid item xs={12} key={rowIndex}>
+              <Grid container spacing={2} justifyContent="center">
+                {stations
+                  .slice(rowIndex * cardsPerRow, (rowIndex + 1) * cardsPerRow)
+                  .map((station, sIndex) => {
+                    const currentExercise =
+                      station.exercises[currentRound % station.exercises.length];
 
-          return (
-            <Box
-              key={sIndex}
-              sx={{
-                p: 2,
-                borderRadius: 2,
-                boxShadow: 3,
-                backgroundColor: '#2a2a2a',
-                color: 'white',
-                width: 300,
-              }}
-            >
-              <Typography variant="h6" gutterBottom>
-                {station.name}
-              </Typography>
-              <Typography variant="subtitle1" gutterBottom>
-                {currentExercise?.name || 'Esercizio'}
-              </Typography>
-              {currentExercise?.gif && (
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: 200,
-                    overflow: 'hidden',
-                    borderRadius: 2,
-                    mt: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#1a1a1a',
-                  }}
-                >
-                  <img
-                    src={getGifPath(currentExercise.gif)}
-                    alt={currentExercise.name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      objectPosition: 'center',
-                    }}
-                  />
-                </Box>
-              )}
-            </Box>
-          );
-        })}
+                    return (
+                      <Grid item key={sIndex}>
+                        <Box
+                          sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            boxShadow: 3,
+                            backgroundColor: '#2a2a2a',
+                            color: 'white',
+                            width: 300,
+                          }}
+                        >
+                          <Typography variant="h6" gutterBottom>
+                            {station.name}
+                          </Typography>
+                          <Typography variant="subtitle1" gutterBottom>
+                            {currentExercise?.name || 'Esercizio'}
+                          </Typography>
+                          {currentExercise?.gif && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: 200,
+                                overflow: 'hidden',
+                                borderRadius: 2,
+                                mt: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                backgroundColor: '#1a1a1a',
+                              }}
+                            >
+                              <img
+                                src={getGifPath(currentExercise.gif)}
+                                alt={currentExercise.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  objectPosition: 'center',
+                                }}
+                              />
+                            </Box>
+                          )}
+                        </Box>
+                      </Grid>
+                    );
+                  })}
+              </Grid>
+            </Grid>
+          ))}
+        </Grid>
       </Box>
     </Box>
   );
