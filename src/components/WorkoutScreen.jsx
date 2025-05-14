@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Timer from './Timer';
 
 function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
@@ -24,18 +25,26 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        pt: 4,
+        position: 'relative',
+        pt: 2,
       }}
     >
-      <Typography variant="h3" align="center" gutterBottom>
-        09K-Tabata
-      </Typography>
+      <IconButton 
+        onClick={onBack}
+        sx={{
+          position: 'absolute',
+          left: 16,
+          top: 16,
+          color: 'primary.main',
+          '&:hover': {
+            backgroundColor: 'rgba(0, 200, 83, 0.08)',
+          }
+        }}
+      >
+        <ArrowBackIcon fontSize="large" />
+      </IconButton>
 
-      <Button onClick={onBack} variant="outlined" sx={{ mb: 2 }}>
-        🔙 Torna alla Dashboard
-      </Button>
-
-      <Box sx={{ width: '100%', maxWidth: 600 }}>
+      <Box sx={{ width: '100%', maxWidth: 600, mb: 4 }}>
         <Timer
           rounds={rounds}
           work={work}
@@ -52,7 +61,7 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
           flexWrap: 'wrap',
           justifyContent: 'center',
           gap: 2,
-          mt: 4,
+          px: 2,
         }}
       >
         {stations.map((station, sIndex) => {

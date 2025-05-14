@@ -153,6 +153,9 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
           <Typography variant="h6" gutterBottom>
             PREPARATI
           </Typography>
+          <Typography variant="body1" sx={{ opacity: 0.8 }} gutterBottom>
+            {formatTime(prepTime)}
+          </Typography>
           <Typography variant="h3">{prepTime}</Typography>
         </Box>
       ) : (
@@ -180,22 +183,27 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
             <Typography variant="h6" gutterBottom>
               {isWorkTime ? 'LAVORO' : 'PAUSA'}
             </Typography>
-            <Typography variant="h3">{formatTime(timeLeft)}</Typography>
+            <Typography variant="body1" sx={{ opacity: 0.8 }} gutterBottom>
+              {formatTime(timeLeft)}
+            </Typography>
+            <Typography variant="h3">{timeLeft}</Typography>
           </Box>
         </>
       )}
-      {!isRunning ? (
-        <Button variant="contained" onClick={startTimer} sx={{ mr: 2 }}>
-          START
+      <Box sx={{ mt: 2 }}>
+        {!isRunning ? (
+          <Button variant="contained" onClick={startTimer} sx={{ mr: 2 }}>
+            START
+          </Button>
+        ) : (
+          <Button variant="outlined" color="warning" onClick={() => setIsRunning(false)} sx={{ mr: 2 }}>
+            PAUSA
+          </Button>
+        )}
+        <Button variant="outlined" color="error" onClick={resetTimer}>
+          RESET
         </Button>
-      ) : (
-        <Button variant="outlined" color="warning" onClick={() => setIsRunning(false)} sx={{ mr: 2 }}>
-          PAUSA
-        </Button>
-      )}
-      <Button variant="outlined" color="error" onClick={resetTimer}>
-        RESET
-      </Button>
+      </Box>
     </Box>
   );
 }
