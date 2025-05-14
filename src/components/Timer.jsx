@@ -146,17 +146,49 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
             backgroundColor: 'primary.main',
             color: 'white',
             borderRadius: 2,
-            p: 2,
+            p: 3,
             my: 2,
           }}
         >
           <Typography variant="h6" gutterBottom>
             PREPARATI
           </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.8 }} gutterBottom>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: -1 }}>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                width: '35px', 
+                textAlign: 'center',
+                letterSpacing: '1px',
+                opacity: 0.7 
+              }}
+            >
+              M M
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                mx: 0.5,
+                opacity: 0.7 
+              }}
+            >
+              :
+            </Typography>
+            <Typography 
+              variant="caption" 
+              sx={{ 
+                width: '35px', 
+                textAlign: 'center',
+                letterSpacing: '1px',
+                opacity: 0.7 
+              }}
+            >
+              S S
+            </Typography>
+          </Box>
+          <Typography variant="h2" sx={{ fontFamily: 'monospace', letterSpacing: 2 }}>
             {formatTime(prepTime)}
           </Typography>
-          <Typography variant="h3">{prepTime}</Typography>
         </Box>
       ) : (
         <>
@@ -176,17 +208,49 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
               backgroundColor: isWorkTime ? 'green' : 'goldenrod',
               color: 'white',
               borderRadius: 2,
-              p: 2,
+              p: 3,
               my: 2,
             }}
           >
             <Typography variant="h6" gutterBottom>
               {isWorkTime ? 'LAVORO' : 'PAUSA'}
             </Typography>
-            <Typography variant="body1" sx={{ opacity: 0.8 }} gutterBottom>
+            <Box sx={{ display: 'flex', justifyContent: 'center', mb: -1 }}>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  width: '35px', 
+                  textAlign: 'center',
+                  letterSpacing: '1px',
+                  opacity: 0.7 
+                }}
+              >
+                M M
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  mx: 0.5,
+                  opacity: 0.7 
+                }}
+              >
+                :
+              </Typography>
+              <Typography 
+                variant="caption" 
+                sx={{ 
+                  width: '35px', 
+                  textAlign: 'center',
+                  letterSpacing: '1px',
+                  opacity: 0.7 
+                }}
+              >
+                S S
+              </Typography>
+            </Box>
+            <Typography variant="h2" sx={{ fontFamily: 'monospace', letterSpacing: 2 }}>
               {formatTime(timeLeft)}
             </Typography>
-            <Typography variant="h3">{timeLeft}</Typography>
           </Box>
         </>
       )}
