@@ -18,7 +18,7 @@ function StationCard({ station, round }) {
   const resolvedGif = exercise?.gif || 'gifs/placeholder.gif';
 
   return (
-    <Card sx={{ minWidth: 250, minHeight: 360, backgroundColor: '#2b2b2b', color: 'white' }}>
+    <Card sx={{ width: 300, backgroundColor: '#2b2b2b', color: 'white' }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           {station.name || 'Stazione'}
@@ -27,27 +27,26 @@ function StationCard({ station, round }) {
           {exercise?.name || 'Esercizio'}
         </Typography>
         <Box
-          mt={2}
           sx={{
-            height: 180,
             width: '100%',
+            height: 200,
             overflow: 'hidden',
             borderRadius: 2,
+            mt: 1,
             display: 'flex',
-            justifyContent: 'center',
             alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#1a1a1a',
           }}
         >
           <img
-          className='tabataGIF'
             src={getGifPath(resolvedGif)}
+            alt={exercise?.name || 'Exercise'}
             style={{
               width: '100%',
-              height: '180px',
+              height: '100%',
               objectFit: 'cover',
               objectPosition: 'center',
-              borderRadius: 8,
-              display: 'block',
             }}
           />
         </Box>

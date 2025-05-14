@@ -68,7 +68,7 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
                 boxShadow: 3,
                 backgroundColor: '#2a2a2a',
                 color: 'white',
-                maxWidth: 300,
+                width: 300,
               }}
             >
               <Typography variant="h6" gutterBottom>
@@ -78,11 +78,30 @@ function WorkoutScreen({ stations, rounds, work, rest, onBack }) {
                 {currentExercise?.name || 'Esercizio'}
               </Typography>
               {currentExercise?.gif && (
-                <img
-                  src={getGifPath(currentExercise.gif)}
-                  alt={currentExercise.name}
-                  style={{ width: '100%', borderRadius: 8, marginTop: 8 }}
-                />
+                <Box
+                  sx={{
+                    width: '100%',
+                    height: 200,
+                    overflow: 'hidden',
+                    borderRadius: 2,
+                    mt: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#1a1a1a',
+                  }}
+                >
+                  <img
+                    src={getGifPath(currentExercise.gif)}
+                    alt={currentExercise.name}
+                    style={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                    }}
+                  />
+                </Box>
               )}
             </Box>
           );
