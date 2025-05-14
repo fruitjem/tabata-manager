@@ -82,12 +82,16 @@ function WorkoutScreen({ stations: initialStations, rounds, work, rest, onBack }
               justifyContent="center"
               {...provided.droppableProps}
               ref={provided.innerRef}
+              sx={{
+                maxWidth: 1200,
+                margin: '0 auto',
+              }}
             >
               {stations.map((station, index) => {
                 const currentExercise = station.exercises[currentRound % station.exercises.length];
                 
                 return (
-                  <Grid item xs={12} sm={stations.length > 4 ? 6 : 12} key={index}>
+                  <Grid item key={index}>
                     <Draggable
                       key={`station-${index}`}
                       draggableId={`station-${index}`}
@@ -98,69 +102,76 @@ function WorkoutScreen({ stations: initialStations, rounds, work, rest, onBack }
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           sx={{
+                            width: 280,
+                            height: 350,
                             p: 2,
                             borderRadius: 2,
                             boxShadow: snapshot.isDragging ? 6 : 3,
                             backgroundColor: snapshot.isDragging ? '#3a3a3a' : '#2a2a2a',
                             color: 'white',
                             transition: 'background-color 0.2s, box-shadow 0.2s',
-                            width: '100%',
-                            minWidth: '320px',
                             position: 'relative',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
                           }}
                         >
-                          <Box
-                            {...provided.dragHandleProps}
-                            sx={{
-                              position: 'absolute',
-                              left: 8,
-                              top: 8,
-                              cursor: 'grab',
-                              color: 'rgba(255, 255, 255, 0.7)',
-                              '&:hover': {
-                                color: 'white',
-                              },
-                            }}
-                          >
-                            <DragIndicatorIcon />
-                          </Box>
-                          
-                          <Box sx={{ pl: 4 }}>
-                            <Typography variant="h6">
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <Box {...provided.dragHandleProps} sx={{ cursor: 'grab', color: 'rgba(46, 204, 113, 0.8)', display: 'flex', alignItems: 'center' }}>
+                              <DragIndicatorIcon sx={{ fontSize: 22, mt: '2px' }} />
+                            </Box>
+                            <Typography
+                              variant="h6"
+                              noWrap
+                              sx={{
+                                color: 'success.main',
+                                fontWeight: 600,
+                                fontSize: '1.1rem',
+                                flex: 1,
+                              }}
+                            >
                               {station.name}
                             </Typography>
-                            
-                            <Typography variant="subtitle1" gutterBottom>
-                              {currentExercise?.name || 'Esercizio'}
-                            </Typography>
-                            
-                            {currentExercise?.gif && (
-                              <Box
-                                sx={{
-                                  width: '100%',
-                                  height: 200,
-                                  overflow: 'hidden',
-                                  borderRadius: 2,
-                                  mt: 1,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  backgroundColor: '#1a1a1a',
-                                }}
-                              >
-                                <img
-                                  src={getGifPath(currentExercise.gif)}
-                                  alt={currentExercise.name}
-                                  style={{
-                                    width: '100%',
-                                    height: '100%',
-                                    objectFit: 'cover',
-                                    objectPosition: 'center',
-                                  }}
-                                />
-                              </Box>
-                            )}
                           </Box>
+                          <Typography
+                            variant="subtitle1"
+                            gutterBottom
+                            noWrap
+                            sx={{
+                              mb: 2,
+                              fontWeight: 700,
+                              color: 'white',
+                            }}
+                          >
+                            {currentExercise?.name || 'Esercizio'}
+                          </Typography>
+                          {currentExercise?.gif && (
+                            <Box
+                              sx={{
+                                width: '100%',
+                                height: 200,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                overflow: 'hidden',
+                                borderRadius: 2,
+                                backgroundColor: '#1a1a1a',
+                                mt: 1,
+                              }}
+                            >
+                              <img
+                                src={getGifPath(currentExercise.gif)}
+                                alt={currentExercise.name}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  objectPosition: 'center',
+                                  display: 'block',
+                                }}
+                              />
+                            </Box>
+                          )}
                         </Box>
                       )}
                     </Draggable>
