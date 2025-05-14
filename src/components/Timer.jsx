@@ -13,6 +13,12 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
   const [preparing, setPreparing] = useState(true);
 
   const timerRef = useRef(null);
+  const beepRef = useRef(new Audio('./sounds/beep.mp3'));
+
+  const playBeep = () => {
+    beepRef.current.currentTime = 0; // Reset audio to start
+    beepRef.current.play().catch(error => console.log('Error playing sound:', error));
+  };
 
   const totalStations = stations.length;
   const totalDuration =
@@ -34,6 +40,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
   const startTimer = () => {
     setIsRunning(true);
     setPreparing(false);
+    playBeep(); // Play beep when starting
   };
 
   useEffect(() => {
@@ -43,6 +50,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
       setTimeLeft((prev) => {
         if (prev <= 1) {
           setElapsed((e) => e + 1); // ✅ conteggia sempre il secondo finale
+          playBeep(); // Play beep on transition
 
           if (isWorkTime) {
             setIsWorkTime(false);
@@ -91,6 +99,15 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
   useEffect(() => {
     onRoundChange(0);
     onStationChange(0);
+    
+    // Preload the audio
+    beepRef.current.load();
+    
+    // Cleanup
+    return () => {
+      beepRef.current.pause();
+      beepRef.current = null;
+    };
   }, []);
 
   const formatTime = (seconds) => {

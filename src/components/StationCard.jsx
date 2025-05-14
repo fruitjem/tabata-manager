@@ -1,4 +1,4 @@
-// StationCard.jsx - fix errore station undefined + gestione GIF compatibile con Electron
+// StationCard.jsx - GIF altezza fissa uniforme, crop centrale coerente
 
 import React from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
@@ -18,7 +18,7 @@ function StationCard({ station, round }) {
   const resolvedGif = exercise?.gif || 'gifs/placeholder.gif';
 
   return (
-    <Card sx={{ minWidth: 250, backgroundColor: '#2b2b2b', color: 'white' }}>
+    <Card sx={{ minWidth: 250, minHeight: 360, backgroundColor: '#2b2b2b', color: 'white' }}>
       <CardContent>
         <Typography variant="h6" gutterBottom>
           {station.name || 'Stazione'}
@@ -26,12 +26,29 @@ function StationCard({ station, round }) {
         <Typography variant="subtitle1" gutterBottom>
           {exercise?.name || 'Esercizio'}
         </Typography>
-        <Box mt={2}>
+        <Box
+          mt={2}
+          sx={{
+            height: 180,
+            width: '100%',
+            overflow: 'hidden',
+            borderRadius: 2,
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <img
+          className='tabataGIF'
             src={getGifPath(resolvedGif)}
-            alt={exercise?.name || 'esercizio'}
-            width="100%"
-            style={{ borderRadius: 8 }}
+            style={{
+              width: '100%',
+              height: '180px',
+              objectFit: 'cover',
+              objectPosition: 'center',
+              borderRadius: 8,
+              display: 'block',
+            }}
           />
         </Box>
       </CardContent>
