@@ -138,7 +138,9 @@ function TabataDashboard({ onStart }) {
         <Divider sx={{ mb: 1, bgcolor: '#444' }} />
         <List>
           {savedTabatas.map((t) => (
-            <ListItem key={t.id} disablePadding
+            <ListItem
+              key={t.id}
+              disablePadding
               secondaryAction={
                 <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(t.id)}>
                   <DeleteIcon sx={{ color: 'white' }} />
@@ -164,7 +166,7 @@ function TabataDashboard({ onStart }) {
         }}
       >
         <Box sx={{ maxWidth: 900, width: '100%', textAlign: 'center' }}>
-          <Typography variant="h4" gutterBottom>
+          <Typography variant="h4" sx={{ mb: 6 }} gutterBottom>
             Crea il tuo allenamento Tabata
           </Typography>
 
