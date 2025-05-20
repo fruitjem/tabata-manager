@@ -4,6 +4,7 @@ import { useState } from 'react';
 import TabataDashboard from './components/TabataDashboard';
 import WorkoutScreen from './components/WorkoutScreen';
 import LandingPage from './components/LandingPage';
+import ExerciseManagement from './components/ExerciseManagement';
 
 function App() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'tabata', 'exercises', 'workout'
@@ -41,8 +42,7 @@ function App() {
           />
         );
       case 'exercises':
-        // TODO: Implement exercises management view
-        return <div>Exercises Management (Coming Soon)</div>;
+        return <ExerciseManagement onBack={() => setCurrentView('landing')} />;
       default:
         return <LandingPage onTabataClick={() => setCurrentView('tabata')} onExercisesClick={() => setCurrentView('exercises')} />;
     }

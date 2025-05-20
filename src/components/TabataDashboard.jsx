@@ -1,4 +1,4 @@
-// TabataDashboard.jsx - aggiornato per arricchire gli esercizi con le GIF
+// TabataDashboard.jsx - aggiornato per utilizzare ExerciseRepository
 
 import { useState, useEffect } from 'react';
 import {
@@ -23,15 +23,11 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-import exerciseOptions from './exercises';
-import TabataRepository from '@/repositories/TabataRepository';
+import ExerciseRepository from '../repositories/ExerciseRepository';
+import TabataRepository from '../repositories/TabataRepository';
 
-const repo = new TabataRepository();
-
-// Sort exercises alphabetically
-const sortedExercises = [...exerciseOptions].sort((a, b) => 
-  a.name.localeCompare(b.name, 'it', { sensitivity: 'base' })
-);
+const tabataRepo = new TabataRepository();
+const exerciseRepo = new ExerciseRepository();
 
 function TabataDashboard({ onStart }) {
   const [tabataName, setTabataName] = useState('');
@@ -45,16 +41,18 @@ function TabataDashboard({ onStart }) {
     },
   ]);
   const [savedTabatas, setSavedTabatas] = useState([]);
+  const [availableExercises, setAvailableExercises] = useState([]);
 
   useEffect(() => {
-    setSavedTabatas(repo.getAll());
+    setSavedTabatas(tabataRepo.getAll());
+    setAvailableExercises(exerciseRepo.getAll());
   }, []);
 
   const handleDelete = (id) => {
     const confirmed = window.confirm('Sei sicuro di voler eliminare questo Tabata?');
     if (confirmed) {
-      repo.delete(id);
-      setSavedTabatas(repo.getAll());
+      tabataRepo.delete(id);
+      setSavedTabatas(tabataRepo.getAll());
     }
   };
 
@@ -65,7 +63,7 @@ function TabataDashboard({ onStart }) {
   };
 
   const handleExerciseChange = (stationIndex, exerciseIndex, newValue) => {
-    const exercise = sortedExercises.find((e) => e.name === newValue);
+    const exercise = availableExercises.find((e) => e.name === newValue);
     const updated = [...stations];
     updated[stationIndex].exercises[exerciseIndex] = {
       name: newValue || '',
@@ -105,7 +103,7 @@ function TabataDashboard({ onStart }) {
   };
 
   function enrichExerciseByName(name) {
-    const match = exerciseOptions.find((e) => e.name === name);
+    const match = availableExercises.find((e) => e.name === name);
     return {
       name,
       gif: match?.gif || '',
@@ -127,8 +125,8 @@ function TabataDashboard({ onStart }) {
       })),
     };
 
-    repo.save(newTabata);
-    setSavedTabatas(repo.getAll());
+    tabataRepo.save(newTabata);
+    setSavedTabatas(tabataRepo.getAll());
     setTabataName('');
   };
 
@@ -317,7 +315,7 @@ function TabataDashboard({ onStart }) {
                             onChange={(event, newValue) => 
                               handleExerciseChange(index, eIndex, newValue)
                             }
-                            options={sortedExercises.map(option => option.name)}
+                            options={availableExercises.map(option => option.name)}
                             renderInput={(params) => (
                               <TextField 
                                 {...params} 
