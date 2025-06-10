@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  CardMedia,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -31,7 +32,12 @@ function ExerciseManagement({ onBack }) {
   });
 
   useEffect(() => {
-    setExercises(repo.getAll());
+    const loadExercises = async () => {
+      const loadedExercises = await repo.getAll();
+      setExercises(loadedExercises);
+      console.log('ExerciseManagement - Initial exercises loaded:', loadedExercises);
+    };
+    loadExercises();
   }, []);
 
   const handleOpenDialog = (exercise = null) => {
@@ -51,25 +57,87 @@ function ExerciseManagement({ onBack }) {
     setFormData({ name: '', gif: '' });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.name) return;
 
     if (editingExercise) {
-      repo.update(editingExercise.id, formData);
+      await repo.update(editingExercise.id, formData);
     } else {
-      repo.save(formData);
+      await repo.save(formData);
     }
 
-    setExercises(repo.getAll());
+    const updatedExercises = await repo.getAll();
+    console.log('handleSubmit - Type of updatedExercises before setting state:', typeof updatedExercises, updatedExercises);
+    setExercises(updatedExercises);
     handleCloseDialog();
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
+    console.log('handleDelete called for ID:', id);
     const confirmed = window.confirm('Sei sicuro di voler eliminare questo esercizio?');
+    console.log('Confirmation:', confirmed);
     if (confirmed) {
-      repo.delete(id);
-      setExercises(repo.getAll());
+      console.log('Exercises BEFORE deletion (from state):', exercises);
+      
+      await repo.delete(id); 
+      console.log('Exercises AFTER repo.delete (might not be updated yet):', repo.getAllRaw());
+      
+      const updated = await repo.getAll(); 
+      console.log('handleDelete - Type of updated before setting state:', typeof updated, updated);
+
+      setExercises(updated);
+      console.log('State set to updated exercises.');
     }
+  };
+
+  const renderGifPreview = (gif) => {
+    if (!gif) return null;
+
+    // Se è un URL base64
+    if (gif.startsWith('data:image')) {
+      return (
+        <CardMedia
+          component="img"
+          image={gif}
+          alt="Exercise preview"
+          sx={{
+            height: 200,
+            objectFit: 'cover',
+            backgroundColor: '#1a1a1a',
+          }}
+        />
+      );
+    }
+
+    // Se è un URL remoto
+    if (gif.startsWith('http')) {
+      return (
+        <CardMedia
+          component="img"
+          image={gif}
+          alt="Exercise preview"
+          sx={{
+            height: 200,
+            objectFit: 'cover',
+            backgroundColor: '#1a1a1a',
+          }}
+        />
+      );
+    }
+
+    // Se è un percorso locale
+    return (
+      <CardMedia
+        component="img"
+        image={gif}
+        alt="Exercise preview"
+        sx={{
+          height: 200,
+          objectFit: 'cover',
+          backgroundColor: '#1a1a1a',
+        }}
+      />
+    );
   };
 
   return (
@@ -92,50 +160,49 @@ function ExerciseManagement({ onBack }) {
       </Button>
 
       <Grid container spacing={3}>
-        {exercises.map((exercise) => (
-          <Grid item xs={12} sm={6} md={4} key={exercise.id}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {exercise.name}
-                </Typography>
-                {exercise.gif && (
-                  <Box
-                    sx={{
-                      width: '100%',
-                      height: 200,
-                      overflow: 'hidden',
-                      borderRadius: 2,
-                      mt: 1,
-                      backgroundColor: '#1a1a1a',
-                    }}
-                  >
-                    <img
-                      src={exercise.gif}
-                      alt={exercise.name}
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                      }}
-                    />
-                  </Box>
-                )}
-              </CardContent>
-              <CardActions>
-                <IconButton onClick={() => handleOpenDialog(exercise)}>
-                  <EditIcon />
-                </IconButton>
-                <IconButton onClick={() => handleDelete(exercise.id)}>
-                  <DeleteIcon />
-                </IconButton>
-              </CardActions>
-            </Card>
+        {console.log('ExerciseManagement - Mapping exercises (type, content):', typeof exercises, exercises)}
+        {Array.isArray(exercises) ? (
+          exercises.length === 0 ? (
+            <Grid item xs={12}>
+              <Typography variant="h6" align="center" sx={{ mt: 4, color: 'text.secondary' }}>
+                Non ci sono esercizi disponibili. Crea il primo!
+              </Typography>
+            </Grid>
+          ) : (
+            exercises.map((exercise) => {
+              console.log('Rendering exercise:', exercise);
+              return (
+                <Grid item xs={12} sm={6} md={4} key={exercise.id}>
+                  <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {exercise.name}
+                      </Typography>
+                      {renderGifPreview(exercise.gif)}
+                    </CardContent>
+                    <CardActions>
+                      <IconButton onClick={() => handleOpenDialog(exercise)}>
+                        <EditIcon />
+                      </IconButton>
+                      <IconButton onClick={() => handleDelete(exercise.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </CardActions>
+                  </Card>
+                </Grid>
+              );
+            })
+          )
+        ) : (
+          <Grid item xs={12}>
+            <Typography variant="h6" align="center" sx={{ mt: 4, color: 'error.main' }}>
+              Caricamento esercizi...
+            </Typography>
           </Grid>
-        ))}
+        )}
       </Grid>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
           {editingExercise ? 'Modifica Esercizio' : 'Nuovo Esercizio'}
         </DialogTitle>
@@ -155,6 +222,14 @@ function ExerciseManagement({ onBack }) {
               onChange={(e) => setFormData({ ...formData, gif: e.target.value })}
               helperText="Inserisci l'URL dell'immagine GIF dell'esercizio"
             />
+            {formData.gif && (
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Anteprima:
+                </Typography>
+                {renderGifPreview(formData.gif)}
+              </Box>
+            )}
           </Box>
         </DialogContent>
         <DialogActions>

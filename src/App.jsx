@@ -20,6 +20,10 @@ function App() {
     setTabataData(null);
   };
 
+  const handleBackToLanding = () => {
+    setCurrentView('landing');
+  };
+
   const renderView = () => {
     switch (currentView) {
       case 'landing':
@@ -30,7 +34,7 @@ function App() {
           />
         );
       case 'tabata':
-        return <TabataDashboard onStart={handleStartTabata} />;
+        return <TabataDashboard onStart={handleStartTabata} onBack={handleBackToLanding} />;
       case 'workout':
         return (
           <WorkoutScreen
@@ -42,7 +46,7 @@ function App() {
           />
         );
       case 'exercises':
-        return <ExerciseManagement onBack={() => setCurrentView('landing')} />;
+        return <ExerciseManagement onBack={handleBackToLanding} />;
       default:
         return <LandingPage onTabataClick={() => setCurrentView('tabata')} onExercisesClick={() => setCurrentView('exercises')} />;
     }

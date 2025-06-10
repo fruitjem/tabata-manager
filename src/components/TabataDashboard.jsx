@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ExerciseRepository from '../repositories/ExerciseRepository';
 import TabataRepository from '../repositories/TabataRepository';
@@ -29,7 +30,7 @@ import TabataRepository from '../repositories/TabataRepository';
 const tabataRepo = new TabataRepository();
 const exerciseRepo = new ExerciseRepository();
 
-function TabataDashboard({ onStart }) {
+function TabataDashboard({ onStart, onBack }) {
   const [tabataName, setTabataName] = useState('');
   const [rounds, setRounds] = useState(3);
   const [work, setWork] = useState(20);
@@ -44,8 +45,13 @@ function TabataDashboard({ onStart }) {
   const [availableExercises, setAvailableExercises] = useState([]);
 
   useEffect(() => {
-    setSavedTabatas(tabataRepo.getAll());
-    setAvailableExercises(exerciseRepo.getAll());
+    const loadData = async () => {
+      setSavedTabatas(tabataRepo.getAll());
+      const loadedExercises = await exerciseRepo.getAll();
+      setAvailableExercises(loadedExercises);
+      console.log('TabataDashboard - Available exercises loaded:', loadedExercises);
+    };
+    loadData();
   }, []);
 
   const handleDelete = (id) => {
@@ -190,9 +196,14 @@ function TabataDashboard({ onStart }) {
         }}
       >
         <Box sx={{ maxWidth: 900, width: '100%', textAlign: 'center' }}>
-          <Typography variant="h4" sx={{ mb: 6 }} gutterBottom>
-            Crea il tuo allenamento Tabata
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+            <IconButton onClick={onBack} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <Typography variant="h4" component="h1">
+              Crea il tuo allenamento Tabata
+            </Typography>
+          </Box>
 
           <Box display="flex" justifyContent="center" gap={2} mb={4} flexWrap="wrap">
             <TextField
