@@ -18,7 +18,15 @@ function createWindow() {
     },
   });
 
-  win.loadFile(path.join(__dirname, '../dist/index.html'));
+  // In development mode, load from the dev server
+  if (process.env.NODE_ENV === 'development') {
+    win.loadURL('http://localhost:5173');
+    // Open DevTools in development mode
+    win.webContents.openDevTools();
+  } else {
+    // In production mode, load from the built files
+    win.loadFile(path.join(__dirname, '../dist/index.html'));
+  }
 }
 
 app.whenReady().then(createWindow);
