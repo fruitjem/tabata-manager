@@ -17,6 +17,13 @@ function WorkoutScreen({ stations: initialStations, rounds, work, rest, onBack }
 
   const getGifPath = (gifPath) => {
     if (!gifPath) return '';
+    
+    // Se è un URL base64 o http, usalo direttamente
+    if (gifPath.startsWith('data:image') || gifPath.startsWith('http')) {
+      return gifPath;
+    }
+    
+    // Se è un percorso locale, aggiungi il prefisso corretto
     const isDev = import.meta.env.MODE === 'development';
     return isDev ? `/${gifPath}` : `./${gifPath}`;
   };

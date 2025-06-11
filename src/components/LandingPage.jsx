@@ -1,8 +1,9 @@
 import { Box, Button, Typography } from '@mui/material';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import ListAltIcon from '@mui/icons-material/ListAlt';
+import TimerIcon from '@mui/icons-material/Timer';
 
-function LandingPage({ onTabataClick, onExercisesClick }) {
+function LandingPage({ onTabataClick, onExercisesClick, onCronometroClick }) {
   return (
     <Box
       sx={{
@@ -62,6 +63,24 @@ function LandingPage({ onTabataClick, onExercisesClick }) {
           }}
         >
           Esercizi
+        </Button>
+
+        <Button
+          variant="contained"
+          size="large"
+          onClick={onCronometroClick}
+          startIcon={<TimerIcon />}
+          sx={{
+            minWidth: 200,
+            minHeight: 100,
+            fontSize: '1.2rem',
+            backgroundColor: 'info.main',
+            '&:hover': {
+              backgroundColor: 'info.dark',
+            },
+          }}
+        >
+          CRONOMETRO
         </Button>
       </Box>
     </Box>

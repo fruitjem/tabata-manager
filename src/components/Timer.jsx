@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Box, Typography, Button, LinearProgress } from '@mui/material';
 
-function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, onComplete }) {
+function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, onComplete, isCronometro = false }) {
   const [isRunning, setIsRunning] = useState(false);
   const [isWorkTime, setIsWorkTime] = useState(true);
   const [timeLeft, setTimeLeft] = useState(work);
@@ -37,8 +37,10 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
     setElapsed(0);
     setPreparing(true);
     setPrepTime(10);
-    onRoundChange(0);
-    onStationChange(0);
+    if (!isCronometro) {
+      onRoundChange(0);
+      onStationChange(0);
+    }
   };
 
   const startTimer = () => {
@@ -75,7 +77,7 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
       return () => clearInterval(timerRef.current);
     }
 
-    // Regular Tabata timer logic
+    // Regular timer logic
     timerRef.current = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -87,28 +89,33 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
             return rest;
           } else {
             setIsWorkTime(true);
-            const nextRound = currentRound + 1;
-            if (nextRound >= rounds) {
-              const nextStation = currentStation + 1;
-              if (nextStation >= totalStations) {
-                setTimeout(() => {
-                  clearInterval(timerRef.current);
-                  setIsRunning(false);
-                  setIsPaused(false);
-                  onComplete?.();
-                }, 0);
-                return 0;
+            if (isCronometro) {
+              return work; // In cronometro mode, just keep alternating
+            } else {
+              // Tabata mode logic
+              const nextRound = currentRound + 1;
+              if (nextRound >= rounds) {
+                const nextStation = currentStation + 1;
+                if (nextStation >= totalStations) {
+                  setTimeout(() => {
+                    clearInterval(timerRef.current);
+                    setIsRunning(false);
+                    setIsPaused(false);
+                    onComplete?.();
+                  }, 0);
+                  return 0;
+                } else {
+                  setCurrentStation(nextStation);
+                  setCurrentRound(0);
+                  onStationChange(nextStation);
+                  onRoundChange(0);
+                  return work;
+                }
               } else {
-                setCurrentStation(nextStation);
-                setCurrentRound(0);
-                onStationChange(nextStation);
-                onRoundChange(0);
+                setCurrentRound(nextRound);
+                onRoundChange(nextRound);
                 return work;
               }
-            } else {
-              setCurrentRound(nextRound);
-              onRoundChange(nextRound);
-              return work;
             }
           }
         }
@@ -119,11 +126,13 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [isRunning, preparing, isWorkTime, currentRound, currentStation]);
+  }, [isRunning, preparing, isWorkTime, currentRound, currentStation, isCronometro]);
 
   useEffect(() => {
-    onRoundChange(0);
-    onStationChange(0);
+    if (!isCronometro) {
+      onRoundChange(0);
+      onStationChange(0);
+    }
     
     // Preload the audio
     beepRef.current.load();
@@ -195,25 +204,29 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
         </Box>
       ) : (
         <>
-          <Typography variant="h6" gutterBottom>
-            Stazione {currentStation + 1} / {stations.length} - Round {currentRound + 1} / {rounds}
-          </Typography>
-          <Typography variant="body2" gutterBottom>
-            Durata totale: {formatTime(totalDuration)} | Trascorso: {formatTime(elapsed)}
-          </Typography>
-          <LinearProgress
-            variant="determinate"
-            value={(elapsed / totalDuration) * 100}
-            sx={{ 
-              height: 10, 
-              borderRadius: 5, 
-              my: 2,
-              opacity: isPaused ? 0.7 : 1,
-              '& .MuiLinearProgress-bar': {
-                transition: isPaused ? 'none' : 'transform 0.4s linear',
-              },
-            }}
-          />
+          {!isCronometro && (
+            <>
+              <Typography variant="h6" gutterBottom>
+                Stazione {currentStation + 1} / {stations.length} - Round {currentRound + 1} / {rounds}
+              </Typography>
+              <Typography variant="body2" gutterBottom>
+                Durata totale: {formatTime(totalDuration)} | Trascorso: {formatTime(elapsed)}
+              </Typography>
+              <LinearProgress
+                variant="determinate"
+                value={(elapsed / totalDuration) * 100}
+                sx={{ 
+                  height: 10, 
+                  borderRadius: 5, 
+                  my: 2,
+                  opacity: isPaused ? 0.7 : 1,
+                  '& .MuiLinearProgress-bar': {
+                    transition: isPaused ? 'none' : 'transform 0.4s linear',
+                  },
+                }}
+              />
+            </>
+          )}
           <Box
             sx={{
               backgroundColor: isWorkTime ? 'green' : 'goldenrod',
@@ -264,22 +277,37 @@ function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, o
               {formatTime(timeLeft)}
             </Typography>
           </Box>
+          <Box sx={{ mt: 2 }}>
+            {!isRunning ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={startTimer}
+                sx={{ mr: 1 }}
+              >
+                {isPaused ? 'RIPRENDI' : 'AVVIA'}
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={pauseTimer}
+                sx={{ mr: 1 }}
+              >
+                PAUSA
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={resetTimer}
+              sx={{ ml: 1 }}
+            >
+              RESET
+            </Button>
+          </Box>
         </>
       )}
-      <Box sx={{ mt: 2 }}>
-        {!isRunning ? (
-          <Button variant="contained" onClick={startTimer} sx={{ mr: 2 }}>
-            {isPaused ? 'RIPRENDI' : 'START'}
-          </Button>
-        ) : (
-          <Button variant="outlined" color="warning" onClick={pauseTimer} sx={{ mr: 2 }}>
-            PAUSA
-          </Button>
-        )}
-        <Button variant="outlined" color="error" onClick={resetTimer}>
-          RESET
-        </Button>
-      </Box>
     </Box>
   );
 }
