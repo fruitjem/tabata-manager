@@ -33,14 +33,6 @@ export default class ExerciseRepository {
     const all = this.getAllRaw();
     let exerciseToSave = { ...newExercise, id: Date.now() };
 
-    if (newExercise.gif && newExercise.gif.startsWith('http')) {
-      try {
-        const base64 = await this.convertGifToBase64(newExercise.gif);
-        exerciseToSave.gif = base64;
-      } catch (error) {
-        console.error('Error during GIF conversion for save:', error);
-      }
-    }
     const updated = [...all, exerciseToSave];
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
     console.log('save - saved exercise:', exerciseToSave);
@@ -51,14 +43,6 @@ export default class ExerciseRepository {
     const all = this.getAllRaw();
     let exerciseToUpdate = { ...updatedExercise, id };
 
-    if (updatedExercise.gif && updatedExercise.gif.startsWith('http')) {
-      try {
-        const base64 = await this.convertGifToBase64(updatedExercise.gif);
-        exerciseToUpdate.gif = base64;
-      } catch (error) {
-        console.error('Error during GIF conversion for update:', error);
-      }
-    }
     const updated = all.map(ex => ex.id === id ? exerciseToUpdate : ex);
     localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
     console.log('update - updated exercise:', exerciseToUpdate);
