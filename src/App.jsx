@@ -7,13 +7,17 @@ import LandingPage from './components/LandingPage';
 import ExerciseManagement from './components/ExerciseManagement';
 import CronometroConfig from './components/CronometroConfig';
 import Timer from './components/Timer';
+import Login from './components/Login';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { auth } from './config/firebase'; // Import auth here
 
-function App() {
+function AppContent() {
   const [currentView, setCurrentView] = useState('landing'); // 'landing', 'tabata', 'exercises', 'workout', 'cronometroConfig', 'cronometroScreen'
   const [tabataData, setTabataData] = useState(null);
   const [cronometroData, setCronometroData] = useState(null);
+  const { user } = useAuth();
 
   const handleStartTabata = ({ stations, rounds, work, rest }) => {
     setTabataData({ stations, rounds, work, rest });
@@ -39,15 +43,39 @@ function App() {
     setCronometroData(null);
   };
 
+  const handleLoginSuccess = () => {
+    setCurrentView('landing');
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      setCurrentView('login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+
+  if (!user) {
+    return <Login onLoginSuccess={handleLoginSuccess} />;
+  }
+
   const renderView = () => {
     switch (currentView) {
       case 'landing':
         return (
-          <LandingPage
-            onTabataClick={() => setCurrentView('tabata')}
-            onExercisesClick={() => setCurrentView('exercises')}
-            onCronometroClick={() => setCurrentView('cronometroConfig')}
-          />
+          <Box sx={{ position: 'relative' }}>
+            <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+              <Button variant="outlined" color="primary" onClick={handleLogout}>
+                Logout
+              </Button>
+            </Box>
+            <LandingPage
+              onTabataClick={() => setCurrentView('tabata')}
+              onExercisesClick={() => setCurrentView('exercises')}
+              onCronometroClick={() => setCurrentView('cronometroConfig')}
+            />
+          </Box>
         );
       case 'tabata':
         return <TabataDashboard onStart={handleStartTabata} onBack={handleBackToLanding} />;
@@ -94,6 +122,14 @@ function App() {
   };
 
   return renderView();
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 }
 
 export default App;
