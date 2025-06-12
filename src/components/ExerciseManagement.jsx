@@ -20,9 +20,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ExerciseRepository from '../repositories/ExerciseRepository';
 
-const repo = new ExerciseRepository();
+function ExerciseManagement({ onBack, userId }) {
+  const repo = new ExerciseRepository(userId);
 
-function ExerciseManagement({ onBack }) {
   const [exercises, setExercises] = useState([]);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingExercise, setEditingExercise] = useState(null);
@@ -37,8 +37,10 @@ function ExerciseManagement({ onBack }) {
       setExercises(loadedExercises);
       console.log('ExerciseManagement - Initial exercises loaded:', loadedExercises);
     };
-    loadExercises();
-  }, []);
+    if (userId) {
+      loadExercises();
+    }
+  }, [userId]);
 
   const handleOpenDialog = (exercise = null) => {
     if (exercise) {

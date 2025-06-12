@@ -19,18 +19,28 @@ import {
   ListItemText,
   Divider,
   Autocomplete,
+  Card,
+  CardContent,
+  CardActions,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Alert,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EditIcon from '@mui/icons-material/Edit';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import ExerciseRepository from '../repositories/ExerciseRepository';
 import TabataRepository from '../repositories/TabataRepository';
 
-const tabataRepo = new TabataRepository();
-const exerciseRepo = new ExerciseRepository();
+function TabataDashboard({ onStart, onBack, userId }) {
+  const tabataRepo = new TabataRepository(userId);
+  const exerciseRepo = new ExerciseRepository(userId);
 
-function TabataDashboard({ onStart, onBack }) {
   const [tabataName, setTabataName] = useState('');
   const [rounds, setRounds] = useState(3);
   const [work, setWork] = useState(20);
@@ -43,6 +53,16 @@ function TabataDashboard({ onStart, onBack }) {
   ]);
   const [savedTabatas, setSavedTabatas] = useState([]);
   const [availableExercises, setAvailableExercises] = useState([]);
+  const [openDialog, setOpenDialog] = useState(false);
+  const [editingTabata, setEditingTabata] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    rounds: 1,
+    work: 20,
+    rest: 10,
+    stations: [],
+  });
+  const [error, setError] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -52,13 +72,73 @@ function TabataDashboard({ onStart, onBack }) {
       console.log('TabataDashboard - Available exercises loaded:', loadedExercises);
     };
     loadData();
-  }, []);
+  }, [userId]);
+
+  const handleOpenDialog = (tabata = null) => {
+    if (tabata) {
+      setEditingTabata(tabata);
+      setFormData({
+        name: tabata.name,
+        rounds: tabata.rounds,
+        work: tabata.work,
+        rest: tabata.rest,
+        stations: tabata.stations,
+      });
+    } else {
+      setEditingTabata(null);
+      setFormData({
+        name: '',
+        rounds: 1,
+        work: 20,
+        rest: 10,
+        stations: [],
+      });
+    }
+    setOpenDialog(true);
+    setError('');
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingTabata(null);
+    setFormData({
+      name: '',
+      rounds: 1,
+      work: 20,
+      rest: 10,
+      stations: [],
+    });
+    setError('');
+  };
+
+  const handleSubmit = () => {
+    if (!formData.name || formData.rounds <= 0 || formData.work <= 0 || formData.rest < 0) {
+      setError('Per favore, compila tutti i campi obbligatori e assicurati che i valori siano validi.');
+      return;
+    }
+    if (formData.stations.length === 0) {
+      setError('Devi aggiungere almeno una stazione al Tabata.');
+      return;
+    }
+
+    const newTabata = { ...formData, id: editingTabata ? editingTabata.id : Date.now() };
+    if (editingTabata) {
+      const updatedTabatas = savedTabatas.map((t) =>
+        t.id === newTabata.id ? newTabata : t
+      );
+      tabataRepo.save(newTabata);
+      setSavedTabatas(updatedTabatas);
+    } else {
+      tabataRepo.save(newTabata);
+      setSavedTabatas([...savedTabatas, newTabata]);
+    }
+    handleCloseDialog();
+  };
 
   const handleDelete = (id) => {
-    const confirmed = window.confirm('Sei sicuro di voler eliminare questo Tabata?');
-    if (confirmed) {
+    if (window.confirm('Sei sicuro di voler eliminare questo Tabata?')) {
       tabataRepo.delete(id);
-      setSavedTabatas(tabataRepo.getAll());
+      setSavedTabatas(savedTabatas.filter((t) => t.id !== id));
     }
   };
 
@@ -102,7 +182,7 @@ function TabataDashboard({ onStart, onBack }) {
 
   const removeStation = (stationIndex) => {
     if (stations.length <= 1) {
-      return; // Mantieni almeno una stazione
+      return;
     }
     const updatedStations = stations.filter((_, index) => index !== stationIndex);
     setStations(updatedStations);
@@ -116,24 +196,18 @@ function TabataDashboard({ onStart, onBack }) {
     };
   }
 
-  const saveTabata = () => {
-    if (!tabataName) return;
+  const handleAddStation = (exercise) => {
+    setFormData((prev) => ({
+      ...prev,
+      stations: [...prev.stations, { id: Date.now() + Math.random(), name: exercise.name, exercises: [exercise] }],
+    }));
+  };
 
-    const newTabata = {
-      id: Date.now(),
-      name: tabataName,
-      rounds,
-      work,
-      rest,
-      stations: stations.map((station) => ({
-        ...station,
-        exercises: station.exercises.map((ex) => enrichExerciseByName(ex.name)),
-      })),
-    };
-
-    tabataRepo.save(newTabata);
-    setSavedTabatas(tabataRepo.getAll());
-    setTabataName('');
+  const handleRemoveStation = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      stations: prev.stations.filter((station) => station.id !== id),
+    }));
   };
 
   const handleStart = () => {
@@ -373,8 +447,8 @@ function TabataDashboard({ onStart, onBack }) {
           </Button>
 
           <Box mt={4} display="flex" gap={2} justifyContent="center">
-            <Button onClick={saveTabata} variant="outlined">
-              Salva Tabata
+            <Button onClick={() => handleOpenDialog()} variant="outlined">
+              + Nuovo Tabata
             </Button>
             <Button onClick={handleStart} variant="contained" color="primary">
               Avvia Tabata
@@ -382,6 +456,102 @@ function TabataDashboard({ onStart, onBack }) {
           </Box>
         </Box>
       </Box>
+
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+        <DialogTitle>
+          {editingTabata ? 'Modifica Tabata' : 'Nuovo Tabata'}
+        </DialogTitle>
+        <DialogContent>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <TextField
+            fullWidth
+            label="Nome Tabata"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            sx={{ mb: 2 }}
+          />
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid item xs={4}>
+              <TextField
+                fullWidth
+                label="Rounds"
+                type="number"
+                value={formData.rounds}
+                onChange={(e) => setFormData({ ...formData, rounds: parseInt(e.target.value) })}
+                inputProps={{ min: 1 }}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                fullWidth
+                label="Lavoro (s)"
+                type="number"
+                value={formData.work}
+                onChange={(e) => setFormData({ ...formData, work: parseInt(e.target.value) })}
+                inputProps={{ min: 1 }}
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                fullWidth
+                label="Riposo (s)"
+                type="number"
+                value={formData.rest}
+                onChange={(e) => setFormData({ ...formData, rest: parseInt(e.target.value) })}
+                inputProps={{ min: 0 }}
+              />
+            </Grid>
+          </Grid>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            Stazioni del Tabata
+          </Typography>
+          <Box sx={{ border: '1px solid #333', borderRadius: 1, p: 2, mb: 2 }}>
+            {formData.stations.length === 0 ? (
+              <Typography variant="body2" color="text.secondary" align="center">Nessuna stazione aggiunta.</Typography>
+            ) : (
+              formData.stations.map((station, index) => (
+                <Box key={station.id} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', py: 1, borderBottom: index < formData.stations.length - 1 ? '1px solid #444' : 'none' }}>
+                  <Typography>{station.name}</Typography>
+                  <IconButton color="error" onClick={() => handleRemoveStation(station.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Box>
+              ))
+            )}
+          </Box>
+
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+            Esercizi Disponibili
+          </Typography>
+          <Grid container spacing={1}>
+            {availableExercises.length === 0 ? (
+              <Grid item xs={12}>
+                <Typography variant="body2" color="text.secondary" align="center">Nessun esercizio disponibile. Aggiungine dalla sezione Esercizi.</Typography>
+              </Grid>
+            ) : (
+              availableExercises.map((exercise) => (
+                <Grid item xs={6} sm={4} md={3} key={exercise.id}>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => handleAddStation(exercise)}
+                    sx={{ mb: 1 }}
+                  >
+                    {exercise.name}
+                  </Button>
+                </Grid>
+              ))
+            )}
+          </Grid>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Annulla</Button>
+          <Button onClick={handleSubmit} variant="contained">
+            {editingTabata ? 'Salva' : 'Crea Tabata'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -1,13 +1,15 @@
-const STORAGE_KEY = 'savedExercises';
-
 export default class ExerciseRepository {
-  constructor() {
-    console.log('ExerciseRepository constructor called.');
+  constructor(userId) {
+    if (!userId) {
+      throw new Error("ExerciseRepository requires a userId.");
+    }
+    this.STORAGE_KEY = `savedExercises_${userId}`;
+    console.log('ExerciseRepository constructor called with userId:', userId, 'and STORAGE_KEY:', this.STORAGE_KEY);
   }
 
   getAllRaw() {
     console.log('getAllRaw called.');
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(this.STORAGE_KEY);
     let parsed = [];
     try {
       parsed = raw ? JSON.parse(raw) : [];
@@ -40,7 +42,7 @@ export default class ExerciseRepository {
       }
     }
     const updated = [...all, exerciseToSave];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
     console.log('save - saved exercise:', exerciseToSave);
   }
 
@@ -58,7 +60,7 @@ export default class ExerciseRepository {
       }
     }
     const updated = all.map(ex => ex.id === id ? exerciseToUpdate : ex);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
     console.log('update - updated exercise:', exerciseToUpdate);
   }
 
@@ -66,7 +68,7 @@ export default class ExerciseRepository {
     console.log('delete called for ID:', id);
     let filtered = this.getAllRaw().filter(ex => ex.id !== id);
     console.log('delete - filtered exercises:', filtered);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(filtered));
     console.log('delete - set filtered exercises in localStorage.');
     // NON ripopolare con i default dopo la cancellazione
   }

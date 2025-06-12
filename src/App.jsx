@@ -60,6 +60,9 @@ function AppContent() {
     return <Login onLoginSuccess={handleLoginSuccess} />;
   }
 
+  // Se l'utente è loggato, recupera il suo UID
+  const userId = user ? user.uid : null;
+
   const renderView = () => {
     switch (currentView) {
       case 'landing':
@@ -78,7 +81,7 @@ function AppContent() {
           </Box>
         );
       case 'tabata':
-        return <TabataDashboard onStart={handleStartTabata} onBack={handleBackToLanding} />;
+        return <TabataDashboard onStart={handleStartTabata} onBack={handleBackToLanding} userId={userId} />;
       case 'workout':
         return (
           <WorkoutScreen
@@ -90,7 +93,7 @@ function AppContent() {
           />
         );
       case 'exercises':
-        return <ExerciseManagement onBack={handleBackToLanding} />;
+        return <ExerciseManagement onBack={handleBackToLanding} userId={userId} />;
       case 'cronometroConfig':
         return <CronometroConfig onBack={handleBackToLanding} onStartCronometro={handleStartCronometro} />;
       case 'cronometroScreen':
