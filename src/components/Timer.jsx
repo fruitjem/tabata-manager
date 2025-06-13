@@ -1,313 +1,147 @@
 // Timer.jsx - fix finale: conteggia correttamente ogni secondo incluso quello finale
 
-import { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Button, LinearProgress } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 
-function Timer({ rounds, work, rest, stations, onRoundChange, onStationChange, onComplete, isCronometro = false }) {
-  const [isRunning, setIsRunning] = useState(false);
-  const [isWorkTime, setIsWorkTime] = useState(true);
-  const [timeLeft, setTimeLeft] = useState(work);
-  const [currentRound, setCurrentRound] = useState(0);
-  const [currentStation, setCurrentStation] = useState(0);
-  const [elapsed, setElapsed] = useState(0);
-  const [preparing, setPreparing] = useState(true);
-  const [prepTime, setPrepTime] = useState(10); // 10 seconds preparation time
-  const [isPaused, setIsPaused] = useState(false);
-
-  const timerRef = useRef(null);
-  const beepRef = useRef(new Audio('./sounds/beep.mp3'));
-
-  const playBeep = () => {
-    beepRef.current.currentTime = 0; // Reset audio to start
-    beepRef.current.play().catch(error => console.log('Error playing sound:', error));
-  };
-
-  const totalStations = stations.length;
-  const totalDuration =
-    Number(rounds) * Number(totalStations) * (Number(work) + Number(rest));
-
-  const resetTimer = () => {
-    clearInterval(timerRef.current);
-    setIsRunning(false);
-    setIsPaused(false);
-    setIsWorkTime(true);
-    setTimeLeft(work);
-    setCurrentRound(0);
-    setCurrentStation(0);
-    setElapsed(0);
-    setPreparing(true);
-    setPrepTime(10);
-    if (!isCronometro) {
-      onRoundChange(0);
-      onStationChange(0);
-    }
-  };
-
-  const startTimer = () => {
-    setIsRunning(true);
-    setIsPaused(false);
-    playBeep(); // Play beep when starting preparation
-  };
-
-  const pauseTimer = () => {
-    setIsRunning(false);
-    setIsPaused(true);
-  };
-
-  useEffect(() => {
-    if (!isRunning) return;
-
-    if (preparing) {
-      // Handle preparation countdown
-      timerRef.current = setInterval(() => {
-        setPrepTime((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            setPreparing(false);
-            playBeep(); // Play beep when preparation ends
-            return 0;
-          }
-          if (prev <= 4) { // Play beep for last 3 seconds
-            playBeep();
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timerRef.current);
-    }
-
-    // Regular timer logic
-    timerRef.current = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
-          setElapsed((e) => e + 1);
-          playBeep(); // Play beep on transition
-
-          if (isWorkTime) {
-            setIsWorkTime(false);
-            return rest;
-          } else {
-            setIsWorkTime(true);
-            if (isCronometro) {
-              return work; // In cronometro mode, just keep alternating
-            } else {
-              // Tabata mode logic
-              const nextRound = currentRound + 1;
-              if (nextRound >= rounds) {
-                const nextStation = currentStation + 1;
-                if (nextStation >= totalStations) {
-                  setTimeout(() => {
-                    clearInterval(timerRef.current);
-                    setIsRunning(false);
-                    setIsPaused(false);
-                    onComplete?.();
-                  }, 0);
-                  return 0;
-                } else {
-                  setCurrentStation(nextStation);
-                  setCurrentRound(0);
-                  onStationChange(nextStation);
-                  onRoundChange(0);
-                  return work;
-                }
-              } else {
-                setCurrentRound(nextRound);
-                onRoundChange(nextRound);
-                return work;
-              }
-            }
-          }
-        }
-
-        setElapsed((e) => e + 1);
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timerRef.current);
-  }, [isRunning, preparing, isWorkTime, currentRound, currentStation, isCronometro]);
-
-  useEffect(() => {
-    if (!isCronometro) {
-      onRoundChange(0);
-      onStationChange(0);
-    }
-    
-    // Preload the audio
-    beepRef.current.load();
-    
-    // Cleanup
-    return () => {
-      beepRef.current.pause();
-      beepRef.current = null;
-    };
-  }, []);
-
+function Timer({
+  isCronometro,
+  isWorkTime,
+  timeLeft,
+  currentRound,
+  totalDurationWithPrep,
+  elapsed,
+  preparing,
+  prepTime,
+  work,
+  rest,
+}) {
   const formatTime = (seconds) => {
     const mm = String(Math.floor(seconds / 60)).padStart(2, '0');
     const ss = String(seconds % 60).padStart(2, '0');
     return `${mm}:${ss}`;
   };
 
+  const timerSize = 250; // Dimensione complessiva del widget
+  const strokeWidthOuter = 10; // Spessore dell'anello esterno (totale)
+  const strokeWidthInner = 15; // Spessore dell'anello interno (fase)
+  const radiusOuter = (timerSize - strokeWidthOuter) / 2;
+  const radiusInner = radiusOuter - strokeWidthOuter - 10; // Spazio tra i due anelli
+
+  const circumferenceOuter = 2 * Math.PI * radiusOuter;
+  const circumferenceInner = 2 * Math.PI * radiusInner;
+
+  // Progresso dell'anello esterno (TOTALE)
+  const progressOuter = totalDurationWithPrep > 0 ? (elapsed / totalDurationWithPrep) * circumferenceOuter : 0;
+
+  // Progresso dell'anello interno (LAVORO/PAUSA)
+  const currentPhaseTotalTime = isWorkTime ? work : rest; // work e rest verranno passati come props ora
+  const progressInner = currentPhaseTotalTime > 0 ? (timeLeft / currentPhaseTotalTime) * circumferenceInner : 0;
+  const innerColor = isWorkTime ? '#2ecc71' : 'goldenrod'; // Verde per lavoro, Giallo per pausa
+  const outerColor = 'white'; // Colore dell'anello totale (come nell'immagine)
+  const outerBgColor = '#3a3a3a'; // Sfondo dell'anello totale
+
   return (
-    <Box textAlign="center">
-      {preparing && isRunning ? (
+    <Box 
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+        my: 2,
+      }}
+    >
+      {/* Widget circolare combinato */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          // border: '2px solid red', // DEBUG BORDER
+        }}
+      >
+        <svg width={timerSize} height={timerSize} style={{ /* border: '2px solid green' */ }}> {/* DEBUG BORDER */}
+          {/* Sfondo cerchio esterno (TOTALE) */}
+          {!isCronometro && (
+            <circle
+              stroke={outerBgColor}
+              fill="transparent"
+              strokeWidth={strokeWidthOuter}
+              r={radiusOuter}
+              cx={timerSize / 2}
+              cy={timerSize / 2}
+            />
+          )}
+          {/* Cerchio esterno (TOTALE) */}
+          {!isCronometro && totalDurationWithPrep > 0 && (
+            <circle
+              stroke={outerColor}
+              fill="transparent"
+              strokeWidth={strokeWidthOuter}
+              r={radiusOuter}
+              cx={timerSize / 2}
+              cy={timerSize / 2}
+              strokeDasharray={circumferenceOuter}
+              strokeDashoffset={circumferenceOuter - progressOuter}
+              strokeLinecap="round"
+              transform={`rotate(-90 ${timerSize / 2} ${timerSize / 2})`}
+            />
+          )}
+          {/* Sfondo cerchio interno (LAVORO/PAUSA) */}
+          <circle
+            stroke={outerBgColor} // Stesso sfondo del cerchio esterno per coerenza
+            fill="transparent"
+            strokeWidth={strokeWidthInner}
+            r={radiusInner}
+            cx={timerSize / 2}
+            cy={timerSize / 2}
+          />
+          {/* Cerchio interno (LAVORO/PAUSA) */}
+          <circle
+            stroke={innerColor}
+            fill="transparent"
+            strokeWidth={strokeWidthInner}
+            r={radiusInner}
+            cx={timerSize / 2}
+            cy={timerSize / 2}
+            strokeDasharray={circumferenceInner}
+            strokeDashoffset={circumferenceInner - progressInner}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${timerSize / 2} ${timerSize / 2})`}
+          />
+        </svg>
         <Box
           sx={{
-            backgroundColor: 'primary.main',
+            position: 'absolute',
+            textAlign: 'center',
             color: 'white',
-            borderRadius: 2,
-            p: 3,
-            my: 2,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            PREPARATI
-          </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: -1 }}>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                width: '35px', 
-                textAlign: 'center',
-                letterSpacing: '1px',
-                opacity: 0.7 
-              }}
-            >
-              M M
+          {preparing ? (
+            <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mb: -1 }}>
+              PREPARATI
             </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                mx: 0.5,
-                opacity: 0.7 
-              }}
-            >
-              :
-            </Typography>
-            <Typography 
-              variant="caption" 
-              sx={{ 
-                width: '35px', 
-                textAlign: 'center',
-                letterSpacing: '1px',
-                opacity: 0.7 
-              }}
-            >
-              S S
-            </Typography>
-          </Box>
-          <Typography variant="h2" sx={{ fontFamily: 'monospace', letterSpacing: 2 }}>
-            {formatTime(prepTime)}
-          </Typography>
-        </Box>
-      ) : (
-        <>
-          {!isCronometro && (
-            <>
-              <Typography variant="h6" gutterBottom>
-                Stazione {currentStation + 1} / {stations.length} - Round {currentRound + 1} / {rounds}
+          ) : (
+            <> {/* Use a fragment to conditionally render ROUND/time and WORK/PAUSA */}
+              {!isCronometro && (
+                <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mb: -1 }}>
+                  ROUND
+                </Typography>
+              )}
+              <Typography variant="h2" sx={{ fontWeight: 'bold' }}>
+                {!isCronometro ? String(currentRound + 1).padStart(2, '0') : formatTime(timeLeft)}
               </Typography>
-              <Typography variant="body2" gutterBottom>
-                Durata totale: {formatTime(totalDuration)} | Trascorso: {formatTime(elapsed)}
-              </Typography>
-              <LinearProgress
-                variant="determinate"
-                value={(elapsed / totalDuration) * 100}
-                sx={{ 
-                  height: 10, 
-                  borderRadius: 5, 
-                  my: 2,
-                  opacity: isPaused ? 0.7 : 1,
-                  '& .MuiLinearProgress-bar': {
-                    transition: isPaused ? 'none' : 'transform 0.4s linear',
-                  },
-                }}
-              />
+              {isCronometro && (
+                <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mt: -1 }}>
+                  {isWorkTime ? 'LAVORO' : 'PAUSA'}
+                </Typography>
+              )}
             </>
           )}
-          <Box
-            sx={{
-              backgroundColor: isWorkTime ? 'green' : 'goldenrod',
-              color: 'white',
-              borderRadius: 2,
-              p: 3,
-              my: 2,
-              opacity: isPaused ? 0.8 : 1,
-            }}
-          >
-            <Typography variant="h6" gutterBottom>
-              {isWorkTime ? 'LAVORO' : 'PAUSA'}
-            </Typography>
-            <Box sx={{ display: 'flex', justifyContent: 'center', mb: -1 }}>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  width: '35px', 
-                  textAlign: 'center',
-                  letterSpacing: '1px',
-                  opacity: 0.7 
-                }}
-              >
-                M M
-              </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  mx: 0.5,
-                  opacity: 0.7 
-                }}
-              >
-                :
-              </Typography>
-              <Typography 
-                variant="caption" 
-                sx={{ 
-                  width: '35px', 
-                  textAlign: 'center',
-                  letterSpacing: '1px',
-                  opacity: 0.7 
-                }}
-              >
-                S S
-              </Typography>
-            </Box>
-            <Typography variant="h2" sx={{ fontFamily: 'monospace', letterSpacing: 2 }}>
-              {formatTime(timeLeft)}
-            </Typography>
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            {!isRunning ? (
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={startTimer}
-                sx={{ mr: 1 }}
-              >
-                {isPaused ? 'RIPRENDI' : 'AVVIA'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={pauseTimer}
-                sx={{ mr: 1 }}
-              >
-                PAUSA
-              </Button>
-            )}
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={resetTimer}
-              sx={{ ml: 1 }}
-            >
-              RESET
-            </Button>
-          </Box>
-        </>
-      )}
+        </Box>
+      </Box>
     </Box>
   );
 }
