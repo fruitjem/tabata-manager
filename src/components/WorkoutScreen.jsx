@@ -281,14 +281,13 @@ function WorkoutScreen({ stations: initialStations, rounds, work, rest, onBack }
               <Timer
                 work={work}
                 rest={rest}
-                rounds={rounds}
-                totalStations={totalStations}
                 currentRound={currentRound}
-                currentStation={currentStation}
                 timeLeft={timeLeft}
                 isWorkTime={isWorkTime}
                 elapsed={elapsed}
                 totalDurationWithPrep={totalDurationWithPrep}
+                preparing={preparing}
+                prepTime={prepTime}
               />
               {stations[currentStation]?.gifUrl && (
                 <Box

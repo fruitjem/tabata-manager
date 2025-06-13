@@ -1,9 +1,8 @@
-// Timer.jsx - fix finale: conteggia correttamente ogni secondo incluso quello finale
+// Timer.jsx - Questo componente è ora specifico per il Tabata
 
 import { Box, Typography } from '@mui/material';
 
 function Timer({
-  isCronometro,
   isWorkTime,
   timeLeft,
   currentRound,
@@ -33,7 +32,7 @@ function Timer({
   const progressOuter = totalDurationWithPrep > 0 ? (elapsed / totalDurationWithPrep) * circumferenceOuter : 0;
 
   // Progresso dell'anello interno (LAVORO/PAUSA)
-  const currentPhaseTotalTime = isWorkTime ? work : rest; // work e rest verranno passati come props ora
+  const currentPhaseTotalTime = isWorkTime ? work : rest;
   const progressInner = currentPhaseTotalTime > 0 ? (timeLeft / currentPhaseTotalTime) * circumferenceInner : 0;
   const innerColor = isWorkTime ? '#2ecc71' : 'goldenrod'; // Verde per lavoro, Giallo per pausa
   const outerColor = 'white'; // Colore dell'anello totale (come nell'immagine)
@@ -59,23 +58,20 @@ function Timer({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          // border: '2px solid red', // DEBUG BORDER
         }}
       >
-        <svg width={timerSize} height={timerSize} style={{ /* border: '2px solid green' */ }}> {/* DEBUG BORDER */}
+        <svg width={timerSize} height={timerSize}>
           {/* Sfondo cerchio esterno (TOTALE) */}
-          {!isCronometro && (
-            <circle
-              stroke={outerBgColor}
-              fill="transparent"
-              strokeWidth={strokeWidthOuter}
-              r={radiusOuter}
-              cx={timerSize / 2}
-              cy={timerSize / 2}
-            />
-          )}
+          <circle
+            stroke={outerBgColor}
+            fill="transparent"
+            strokeWidth={strokeWidthOuter}
+            r={radiusOuter}
+            cx={timerSize / 2}
+            cy={timerSize / 2}
+          />
           {/* Cerchio esterno (TOTALE) */}
-          {!isCronometro && totalDurationWithPrep > 0 && (
+          {totalDurationWithPrep > 0 && (
             <circle
               stroke={outerColor}
               fill="transparent"
@@ -124,20 +120,13 @@ function Timer({
               PREPARATI
             </Typography>
           ) : (
-            <> {/* Use a fragment to conditionally render ROUND/time and WORK/PAUSA */}
-              {!isCronometro && (
-                <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mb: -1 }}>
-                  ROUND
-                </Typography>
-              )}
-              <Typography variant="h2" sx={{ fontWeight: 'bold' }}>
-                {!isCronometro ? String(currentRound + 1).padStart(2, '0') : formatTime(timeLeft)}
+            <> 
+              <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mb: -1 }}>
+                ROUND
               </Typography>
-              {isCronometro && (
-                <Typography variant="h6" sx={{ display: 'block', textTransform: 'uppercase', opacity: 0.8, mt: -1 }}>
-                  {isWorkTime ? 'LAVORO' : 'PAUSA'}
-                </Typography>
-              )}
+              <Typography variant="h2" sx={{ fontWeight: 'bold' }}>
+                {String(currentRound + 1).padStart(2, '0')}
+              </Typography>
             </>
           )}
         </Box>

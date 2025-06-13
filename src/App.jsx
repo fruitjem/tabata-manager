@@ -6,7 +6,8 @@ import WorkoutScreen from './components/WorkoutScreen';
 import LandingPage from './components/LandingPage';
 import ExerciseManagement from './components/ExerciseManagement';
 import CronometroConfig from './components/CronometroConfig';
-import Timer from './components/Timer';
+import Timer from './components/Timer'; // Questo è ora il TimerTabata
+import TimerCronometro from './components/TimerCronometro'; // Nuovo import per il cronometro
 import Login from './components/Login';
 import { Box, Typography, Button, IconButton } from '@mui/material';
 import ArrowBack from '@mui/icons-material/ArrowBack';
@@ -107,15 +108,10 @@ function AppContent() {
                 Cronometro
               </Typography>
             </Box>
-            <Timer
+            <TimerCronometro
               work={cronometroData.work}
               rest={cronometroData.rest}
-              rounds={1}
-              stations={[{ name: 'Cronometro', exercises: [] }]}
               onComplete={handleBackToCronometroConfig}
-              onRoundChange={() => {}}
-              onStationChange={() => {}}
-              isCronometro={true}
             />
           </Box>
         );
